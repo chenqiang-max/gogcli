@@ -1,10 +1,12 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"strings"
 	"text/tabwriter"
+	"time"
 
 	"github.com/spf13/cobra"
 	"github.com/steipete/gogcli/internal/googleapi"
@@ -12,7 +14,10 @@ import (
 	"github.com/steipete/gogcli/internal/ui"
 )
 
-const directoryReadMask = "names,emailAddresses"
+const (
+	directoryReadMask       = "names,emailAddresses"
+	directoryRequestTimeout = 20 * time.Second
+)
 
 func newContactsDirectoryCmd(flags *rootFlags) *cobra.Command {
 	cmd := &cobra.Command{
@@ -44,11 +49,15 @@ func newContactsDirectoryListCmd(flags *rootFlags) *cobra.Command {
 				return err
 			}
 
+			ctx, cancel := context.WithTimeout(cmd.Context(), directoryRequestTimeout)
+			defer cancel()
+
 			resp, err := svc.People.ListDirectoryPeople().
 				Sources("DIRECTORY_SOURCE_TYPE_DOMAIN_PROFILE").
 				ReadMask(directoryReadMask).
 				PageSize(max).
 				PageToken(page).
+				Context(ctx).
 				Do()
 			if err != nil {
 				return err
@@ -128,12 +137,16 @@ func newContactsDirectorySearchCmd(flags *rootFlags) *cobra.Command {
 				return err
 			}
 
+			ctx, cancel := context.WithTimeout(cmd.Context(), directoryRequestTimeout)
+			defer cancel()
+
 			resp, err := svc.People.SearchDirectoryPeople().
 				Query(query).
 				Sources("DIRECTORY_SOURCE_TYPE_DOMAIN_PROFILE").
 				ReadMask(directoryReadMask).
 				PageSize(max).
 				PageToken(page).
+				Context(ctx).
 				Do()
 			if err != nil {
 				return err
