@@ -14,6 +14,8 @@ import (
 	"google.golang.org/api/gmail/v1"
 )
 
+var newGmailService = googleapi.NewGmail
+
 func newGmailLabelsCmd(flags *rootFlags) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "labels",
@@ -37,7 +39,7 @@ func newGmailLabelsGetCmd(flags *rootFlags) *cobra.Command {
 				return err
 			}
 
-			svc, err := googleapi.NewGmail(cmd.Context(), account)
+			svc, err := newGmailService(cmd.Context(), account)
 			if err != nil {
 				return err
 			}
@@ -87,7 +89,7 @@ func newGmailLabelsListCmd(flags *rootFlags) *cobra.Command {
 				return err
 			}
 
-			svc, err := googleapi.NewGmail(cmd.Context(), account)
+			svc, err := newGmailService(cmd.Context(), account)
 			if err != nil {
 				return err
 			}
@@ -136,7 +138,7 @@ func newGmailLabelsModifyCmd(flags *rootFlags) *cobra.Command {
 				return errors.New("must specify --add and/or --remove")
 			}
 
-			svc, err := googleapi.NewGmail(cmd.Context(), account)
+			svc, err := newGmailService(cmd.Context(), account)
 			if err != nil {
 				return err
 			}

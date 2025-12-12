@@ -79,6 +79,20 @@ func TestChooseProfile_NoColorEnv(t *testing.T) {
 	}
 }
 
+func TestChooseProfile_Modes(t *testing.T) {
+	t.Setenv("NO_COLOR", "")
+
+	if got := chooseProfile(termenv.TrueColor, "never"); got != termenv.Ascii {
+		t.Fatalf("never: expected ascii, got: %v", got)
+	}
+	if got := chooseProfile(termenv.Ascii, "always"); got != termenv.TrueColor {
+		t.Fatalf("always: expected truecolor, got: %v", got)
+	}
+	if got := chooseProfile(termenv.Ascii, "auto"); got != termenv.Ascii {
+		t.Fatalf("auto: expected detected, got: %v", got)
+	}
+}
+
 func TestWithUIFromContext(t *testing.T) {
 	t.Parallel()
 

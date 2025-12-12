@@ -7,7 +7,6 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
-	"os"
 	"strings"
 	"testing"
 
@@ -16,25 +15,6 @@ import (
 	"google.golang.org/api/drive/v3"
 	"google.golang.org/api/option"
 )
-
-func captureStdout(t *testing.T, fn func()) string {
-	t.Helper()
-
-	orig := os.Stdout
-	r, w, err := os.Pipe()
-	if err != nil {
-		t.Fatalf("pipe: %v", err)
-	}
-	os.Stdout = w
-
-	fn()
-
-	_ = w.Close()
-	os.Stdout = orig
-	b, _ := io.ReadAll(r)
-	_ = r.Close()
-	return string(b)
-}
 
 func TestDriveURLCmd_TextAndJSON(t *testing.T) {
 	origNew := newDriveService
