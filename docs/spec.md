@@ -122,7 +122,7 @@ Environment:
 ### Implemented
 
 - `gog auth credentials <credentials.json>`
-- `gog auth add <email> [--services all|gmail,calendar,drive,contacts,tasks] [--manual] [--force-consent]`
+- `gog auth add <email> [--services all|gmail,calendar,drive,contacts,tasks,people] [--manual] [--force-consent]`
 - `gog auth list`
 - `gog auth remove <email>`
 - `gog auth tokens list`
@@ -231,6 +231,8 @@ We store a single refresh token per Google account email.
   - `https://www.googleapis.com/auth/contacts`
   - `https://www.googleapis.com/auth/contacts.other.readonly`
   - `https://www.googleapis.com/auth/directory.readonly`
+- People:
+  - `profile` (OIDC)
 
 ## Output formats (planned)
 

@@ -51,7 +51,7 @@ Then:
 Notes:
 
 - If no OS keychain backend is available (e.g. Linux/WSL/container), keyring can fall back to an encrypted on-disk store and may prompt for a password; for non-interactive runs set `GOG_KEYRING_PASSWORD`.
-- Default is `--services all` (gmail, calendar, drive, contacts, tasks).
+- Default is `--services all` (gmail, calendar, drive, contacts, tasks, people).
 - To request fewer scopes: `gog auth add you@gmail.com --services drive,calendar`.
 - If you add services later and Google doesn’t return a refresh token, re-run with `--force-consent`.
 - `gog auth add ...` overwrites the stored token for that email.
