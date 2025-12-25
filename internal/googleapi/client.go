@@ -2,6 +2,8 @@ package googleapi
 
 import (
 	"context"
+	"crypto/tls"
+	"log/slog"
 	"net/http"
 	"time"
 
@@ -63,16 +65,34 @@ func tokenSourceForAccountScopes(ctx context.Context, serviceLabel string, email
 }
 
 func optionsForAccount(ctx context.Context, service googleauth.Service, email string) ([]option.ClientOption, error) {
+	slog.Debug("creating client options", "service", service, "email", email)
+
 	ts, err := tokenSourceForAccount(ctx, service, email)
 	if err != nil {
 		return nil, err
 	}
-	c := oauth2.NewClient(ctx, ts)
-	c.Timeout = defaultHTTPTimeout
+	baseTransport := &http.Transport{
+		TLSClientConfig: &tls.Config{
+			MinVersion: tls.VersionTLS12,
+		},
+	}
+	// Wrap with retry logic for 429 and 5xx errors
+	retryTransport := NewRetryTransport(&oauth2.Transport{
+		Source: ts,
+		Base:   baseTransport,
+	})
+	c := &http.Client{
+		Transport: retryTransport,
+		Timeout:   defaultHTTPTimeout,
+	}
+
+	slog.Debug("client options created successfully", "service", service, "email", email)
 	return []option.ClientOption{option.WithHTTPClient(c)}, nil
 }
 
 func optionsForAccountScopes(ctx context.Context, serviceLabel string, email string, scopes []string) ([]option.ClientOption, error) {
+	slog.Debug("creating client options with custom scopes", "serviceLabel", serviceLabel, "email", email)
+
 	creds, err := readClientCredentials()
 	if err != nil {
 		return nil, err
@@ -81,7 +101,21 @@ func optionsForAccountScopes(ctx context.Context, serviceLabel string, email str
 	if err != nil {
 		return nil, err
 	}
-	c := oauth2.NewClient(ctx, ts)
-	c.Timeout = defaultHTTPTimeout
+	baseTransport := &http.Transport{
+		TLSClientConfig: &tls.Config{
+			MinVersion: tls.VersionTLS12,
+		},
+	}
+	// Wrap with retry logic for 429 and 5xx errors
+	retryTransport := NewRetryTransport(&oauth2.Transport{
+		Source: ts,
+		Base:   baseTransport,
+	})
+	c := &http.Client{
+		Transport: retryTransport,
+		Timeout:   defaultHTTPTimeout,
+	}
+
+	slog.Debug("client options with custom scopes created successfully", "serviceLabel", serviceLabel, "email", email)
 	return []option.ClientOption{option.WithHTTPClient(c)}, nil
 }

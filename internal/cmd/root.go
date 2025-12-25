@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"log/slog"
 	"os"
 	"strings"
 
@@ -15,6 +16,7 @@ type rootFlags struct {
 	Color   string
 	Account string
 	Output  string
+	Debug   bool
 }
 
 func Execute(args []string) error {
@@ -65,6 +67,14 @@ func Execute(args []string) error {
   gog --output=json drive ls --max 5 | jq .
 `),
 		PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
+			logLevel := slog.LevelInfo
+			if flags.Debug {
+				logLevel = slog.LevelDebug
+			}
+			slog.SetDefault(slog.New(slog.NewTextHandler(os.Stderr, &slog.HandlerOptions{
+				Level: logLevel,
+			})))
+
 			mode, err := outfmt.Parse(flags.Output)
 			if err != nil {
 				return err
@@ -93,6 +103,7 @@ func Execute(args []string) error {
 	root.PersistentFlags().StringVar(&flags.Color, "color", flags.Color, "Color output: auto|always|never")
 	root.PersistentFlags().StringVar(&flags.Account, "account", "", "Account email for API commands (gmail/calendar/drive/contacts/tasks/people)")
 	root.PersistentFlags().StringVar(&flags.Output, "output", flags.Output, "Output format: text|json")
+	root.PersistentFlags().BoolVar(&flags.Debug, "debug", false, "Enable debug logging")
 
 	root.AddCommand(newAuthCmd())
 	root.AddCommand(newDriveCmd(&flags))
@@ -101,6 +112,9 @@ func Execute(args []string) error {
 	root.AddCommand(newContactsCmd(&flags))
 	root.AddCommand(newTasksCmd(&flags))
 	root.AddCommand(newPeopleCmd(&flags))
+	root.AddCommand(newSheetsCmd(&flags))
+	root.AddCommand(newVersionCmd())
+	root.AddCommand(newCompletionCmd())
 
 	err := root.Execute()
 	if err == nil {

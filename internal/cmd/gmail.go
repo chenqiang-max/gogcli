@@ -1,10 +1,12 @@
 package cmd
 
 import (
+	"context"
 	"fmt"
 	"net/mail"
 	"os"
 	"strings"
+	"sync"
 	"text/tabwriter"
 	"time"
 
@@ -32,6 +34,13 @@ func newGmailCmd(flags *rootFlags) *cobra.Command {
 	cmd.AddCommand(newGmailDraftsCmd(flags))
 	cmd.AddCommand(newGmailWatchCmd(flags))
 	cmd.AddCommand(newGmailHistoryCmd(flags))
+	cmd.AddCommand(newGmailAutoForwardCmd(flags))
+	cmd.AddCommand(newGmailBatchCmd(flags))
+	cmd.AddCommand(newGmailDelegatesCmd(flags))
+	cmd.AddCommand(newGmailFiltersCmd(flags))
+	cmd.AddCommand(newGmailForwardingCmd(flags))
+	cmd.AddCommand(newGmailSendAsCmd(flags))
+	cmd.AddCommand(newGmailVacationCmd(flags))
 	return cmd
 }
 
@@ -60,6 +69,7 @@ func newGmailSearchCmd(flags *rootFlags) *cobra.Command {
 				Q(query).
 				MaxResults(max).
 				PageToken(page).
+				Context(cmd.Context()).
 				Do()
 			if err != nil {
 				return err
@@ -70,57 +80,13 @@ func newGmailSearchCmd(flags *rootFlags) *cobra.Command {
 				return err
 			}
 
-			type item struct {
-				ID      string   `json:"id"`
-				Date    string   `json:"date,omitempty"`
-				From    string   `json:"from,omitempty"`
-				Subject string   `json:"subject,omitempty"`
-				Labels  []string `json:"labels,omitempty"`
+			// Fetch thread details concurrently (fixes N+1 query pattern)
+			items, err := fetchThreadDetails(cmd.Context(), svc, resp.Threads, idToName)
+			if err != nil {
+				return err
 			}
-			items := make([]item, 0, len(resp.Threads))
 
 			tw := tabwriter.NewWriter(os.Stdout, 0, 4, 2, ' ', 0)
-			for _, t := range resp.Threads {
-				if t.Id == "" {
-					continue
-				}
-				thread, err := svc.Users.Threads.Get("me", t.Id).
-					Format("metadata").
-					MetadataHeaders("From", "Subject", "Date").
-					Do()
-				if err != nil {
-					return err
-				}
-				msg := firstMessage(thread)
-				date := ""
-				from := ""
-				subject := ""
-				var labels []string
-				if msg != nil {
-					date = formatGmailDate(headerValue(msg.Payload, "Date"))
-					from = headerValue(msg.Payload, "From")
-					subject = headerValue(msg.Payload, "Subject")
-					if len(msg.LabelIds) > 0 {
-						names := make([]string, 0, len(msg.LabelIds))
-						for _, id := range msg.LabelIds {
-							if n, ok := idToName[id]; ok {
-								names = append(names, n)
-							} else {
-								names = append(names, id)
-							}
-						}
-						labels = names
-					}
-				}
-
-				items = append(items, item{
-					ID:      t.Id,
-					Date:    date,
-					From:    sanitizeTab(from),
-					Subject: sanitizeTab(subject),
-					Labels:  labels,
-				})
-			}
 
 			if outfmt.IsJSON(cmd.Context()) {
 				return outfmt.WriteJSON(os.Stdout, map[string]any{
@@ -189,4 +155,110 @@ func sanitizeTab(s string) string {
 func mailParseDate(s string) (time.Time, error) {
 	// net/mail has the most compatible Date parser, but we keep this isolated for easier tests/mocks later.
 	return mail.ParseDate(s)
+}
+
+// threadItem holds parsed thread metadata for display/JSON output
+type threadItem struct {
+	ID      string   `json:"id"`
+	Date    string   `json:"date,omitempty"`
+	From    string   `json:"from,omitempty"`
+	Subject string   `json:"subject,omitempty"`
+	Labels  []string `json:"labels,omitempty"`
+}
+
+// fetchThreadDetails fetches thread metadata concurrently with bounded parallelism.
+// This eliminates N+1 queries by fetching all threads in parallel.
+func fetchThreadDetails(ctx context.Context, svc *gmail.Service, threads []*gmail.Thread, idToName map[string]string) ([]threadItem, error) {
+	if len(threads) == 0 {
+		return nil, nil
+	}
+
+	const maxConcurrency = 10 // Limit parallel requests to avoid rate limiting
+	sem := make(chan struct{}, maxConcurrency)
+
+	type result struct {
+		index int
+		item  threadItem
+		err   error
+	}
+
+	results := make(chan result, len(threads))
+	var wg sync.WaitGroup
+
+	for i, t := range threads {
+		if t.Id == "" {
+			continue
+		}
+
+		wg.Add(1)
+		go func(idx int, threadID string) {
+			defer wg.Done()
+
+			// Acquire semaphore
+			select {
+			case sem <- struct{}{}:
+				defer func() { <-sem }()
+			case <-ctx.Done():
+				results <- result{index: idx, err: ctx.Err()}
+				return
+			}
+
+			thread, err := svc.Users.Threads.Get("me", threadID).
+				Format("metadata").
+				MetadataHeaders("From", "Subject", "Date").
+				Context(ctx).
+				Do()
+			if err != nil {
+				results <- result{index: idx, err: err}
+				return
+			}
+
+			item := threadItem{ID: threadID}
+			if msg := firstMessage(thread); msg != nil {
+				item.Date = formatGmailDate(headerValue(msg.Payload, "Date"))
+				item.From = sanitizeTab(headerValue(msg.Payload, "From"))
+				item.Subject = sanitizeTab(headerValue(msg.Payload, "Subject"))
+				if len(msg.LabelIds) > 0 {
+					names := make([]string, 0, len(msg.LabelIds))
+					for _, id := range msg.LabelIds {
+						if n, ok := idToName[id]; ok {
+							names = append(names, n)
+						} else {
+							names = append(names, id)
+						}
+					}
+					item.Labels = names
+				}
+			}
+
+			results <- result{index: idx, item: item}
+		}(i, t.Id)
+	}
+
+	// Close results channel when all goroutines complete
+	go func() {
+		wg.Wait()
+		close(results)
+	}()
+
+	// Collect results in order
+	items := make([]threadItem, len(threads))
+	validCount := 0
+	for r := range results {
+		if r.err != nil {
+			return nil, r.err
+		}
+		items[r.index] = r.item
+		validCount++
+	}
+
+	// Filter out empty items (from threads with empty IDs)
+	filtered := make([]threadItem, 0, validCount)
+	for _, item := range items {
+		if item.ID != "" {
+			filtered = append(filtered, item)
+		}
+	}
+
+	return filtered, nil
 }

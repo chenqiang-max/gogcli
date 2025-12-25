@@ -53,14 +53,14 @@ func TestExtractCodeAndState_Errors(t *testing.T) {
 
 func TestAllServices(t *testing.T) {
 	svcs := AllServices()
-	if len(svcs) != 6 {
+	if len(svcs) != 7 {
 		t.Fatalf("unexpected: %v", svcs)
 	}
 	seen := make(map[Service]bool)
 	for _, s := range svcs {
 		seen[s] = true
 	}
-	for _, want := range []Service{ServiceGmail, ServiceCalendar, ServiceDrive, ServiceContacts, ServiceTasks, ServicePeople} {
+	for _, want := range []Service{ServiceGmail, ServiceCalendar, ServiceDrive, ServiceContacts, ServiceTasks, ServicePeople, ServiceSheets} {
 		if !seen[want] {
 			t.Fatalf("missing %q", want)
 		}
