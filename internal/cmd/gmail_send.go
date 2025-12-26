@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"encoding/base64"
-	"errors"
 	"os"
 	"strings"
 
@@ -34,10 +33,10 @@ func newGmailSendCmd(flags *rootFlags) *cobra.Command {
 				return err
 			}
 			if strings.TrimSpace(to) == "" || strings.TrimSpace(subject) == "" {
-				return errors.New("required: --to, --subject")
+				return usage("required: --to, --subject")
 			}
 			if strings.TrimSpace(body) == "" && strings.TrimSpace(bodyHTML) == "" {
-				return errors.New("required: --body or --body-html")
+				return usage("required: --body or --body-html")
 			}
 
 			svc, err := newGmailService(cmd.Context(), account)

@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"io"
 	"net/mail"
 	"os"
 	"strings"
@@ -79,7 +80,6 @@ func newGmailSearchCmd(flags *rootFlags) *cobra.Command {
 			}
 			items := make([]item, 0, len(resp.Threads))
 
-			tw := tabwriter.NewWriter(os.Stdout, 0, 4, 2, ' ', 0)
 			for _, t := range resp.Threads {
 				if t.Id == "" {
 					continue
@@ -134,11 +134,20 @@ func newGmailSearchCmd(flags *rootFlags) *cobra.Command {
 				return nil
 			}
 
-			fmt.Fprintln(tw, "ID\tDATE\tFROM\tSUBJECT\tLABELS")
-			for _, it := range items {
-				fmt.Fprintf(tw, "%s\t%s\t%s\t%s\t%s\n", it.ID, it.Date, it.From, it.Subject, strings.Join(it.Labels, ","))
+			var w io.Writer = os.Stdout
+			var tw *tabwriter.Writer
+			if !outfmt.IsPlain(cmd.Context()) {
+				tw = tabwriter.NewWriter(os.Stdout, 0, 4, 2, ' ', 0)
+				w = tw
 			}
-			_ = tw.Flush()
+
+			fmt.Fprintln(w, "ID\tDATE\tFROM\tSUBJECT\tLABELS")
+			for _, it := range items {
+				fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n", it.ID, it.Date, it.From, it.Subject, strings.Join(it.Labels, ","))
+			}
+			if tw != nil {
+				_ = tw.Flush()
+			}
 
 			if resp.NextPageToken != "" {
 				u.Err().Printf("# Next page: --page %s", resp.NextPageToken)

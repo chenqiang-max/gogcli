@@ -57,7 +57,7 @@ func TestExecute_GmailGet_Metadata_JSON(t *testing.T) {
 	out := captureStdout(t, func() {
 		_ = captureStderr(t, func() {
 			if err := Execute([]string{
-				"--output", "json",
+				"--json",
 				"--account", "a@b.com",
 				"gmail", "get", "m1",
 				"--format", "metadata",
@@ -132,7 +132,7 @@ func TestExecute_GmailGet_Raw_JSON(t *testing.T) {
 	out := captureStdout(t, func() {
 		_ = captureStderr(t, func() {
 			if err := Execute([]string{
-				"--output", "json",
+				"--json",
 				"--account", "a@b.com",
 				"gmail", "get", "m1",
 				"--format", "raw",
@@ -212,7 +212,6 @@ func TestExecute_GmailGet_Metadata_Text(t *testing.T) {
 	out := captureStdout(t, func() {
 		_ = captureStderr(t, func() {
 			if err := Execute([]string{
-				"--output", "text",
 				"--account", "a@b.com",
 				"gmail", "get", "m1",
 				"--format", "metadata",

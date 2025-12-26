@@ -31,7 +31,7 @@ func newGmailAttachmentCmd(flags *rootFlags) *cobra.Command {
 			messageID := strings.TrimSpace(args[0])
 			attachmentID := strings.TrimSpace(args[1])
 			if messageID == "" || attachmentID == "" {
-				return errors.New("messageId/attachmentId required")
+				return usage("messageId/attachmentId required")
 			}
 
 			svc, err := newGmailService(cmd.Context(), account)

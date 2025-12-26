@@ -63,7 +63,7 @@ func TestDrivePermissionsCmd_TextAndJSON(t *testing.T) {
 		t.Fatalf("ui.New: %v", err)
 	}
 	ctx := ui.WithUI(context.Background(), u)
-	ctx = outfmt.WithMode(ctx, outfmt.ModeText)
+	ctx = outfmt.WithMode(ctx, outfmt.Mode{})
 
 	textOut := captureStdout(t, func() {
 		cmd := newDrivePermissionsCmd(flags)
@@ -90,7 +90,7 @@ func TestDrivePermissionsCmd_TextAndJSON(t *testing.T) {
 		t.Fatalf("ui.New: %v", err)
 	}
 	ctx2 := ui.WithUI(context.Background(), u2)
-	ctx2 = outfmt.WithMode(ctx2, outfmt.ModeJSON)
+	ctx2 = outfmt.WithMode(ctx2, outfmt.Mode{JSON: true})
 
 	jsonOut := captureStdout(t, func() {
 		cmd := newDrivePermissionsCmd(flags)

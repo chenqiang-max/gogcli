@@ -44,7 +44,7 @@ func TestExecute_PeopleMe_JSON(t *testing.T) {
 
 	out := captureStdout(t, func() {
 		_ = captureStderr(t, func() {
-			if err := Execute([]string{"--output", "json", "--account", "a@b.com", "people", "me"}); err != nil {
+			if err := Execute([]string{"--json", "--account", "a@b.com", "people", "me"}); err != nil {
 				t.Fatalf("Execute: %v", err)
 			}
 		})
@@ -98,7 +98,7 @@ func TestExecute_PeopleMe_Text(t *testing.T) {
 
 	out := captureStdout(t, func() {
 		_ = captureStderr(t, func() {
-			if err := Execute([]string{"--output", "text", "--account", "a@b.com", "people", "me"}); err != nil {
+			if err := Execute([]string{"--account", "a@b.com", "people", "me"}); err != nil {
 				t.Fatalf("Execute: %v", err)
 			}
 		})

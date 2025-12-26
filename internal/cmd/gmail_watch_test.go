@@ -74,7 +74,7 @@ func TestGmailWatchStartCmd_JSON(t *testing.T) {
 			t.Fatalf("ui.New: %v", uiErr)
 		}
 		ctx := ui.WithUI(context.Background(), u)
-		ctx = outfmt.WithMode(ctx, outfmt.ModeJSON)
+		ctx = outfmt.WithMode(ctx, outfmt.Mode{JSON: true})
 
 		cmd := newGmailWatchStartCmd(flags)
 		cmd.SetContext(ctx)

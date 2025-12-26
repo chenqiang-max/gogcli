@@ -55,7 +55,7 @@ func TestExecute_DriveGet_JSON(t *testing.T) {
 
 	out := captureStdout(t, func() {
 		_ = captureStderr(t, func() {
-			if err := Execute([]string{"--output", "json", "--account", "a@b.com", "drive", "get", "id1"}); err != nil {
+			if err := Execute([]string{"--json", "--account", "a@b.com", "drive", "get", "id1"}); err != nil {
 				t.Fatalf("Execute: %v", err)
 			}
 		})
@@ -123,7 +123,7 @@ func TestExecute_DriveDownload_JSON(t *testing.T) {
 	dest := filepath.Join(t.TempDir(), "out.bin")
 	out := captureStdout(t, func() {
 		_ = captureStderr(t, func() {
-			if err := Execute([]string{"--output", "json", "--account", "a@b.com", "drive", "download", "id1", "--out", dest}); err != nil {
+			if err := Execute([]string{"--json", "--account", "a@b.com", "drive", "download", "id1", "--out", dest}); err != nil {
 				t.Fatalf("Execute: %v", err)
 			}
 		})
@@ -184,7 +184,7 @@ func TestDriveDownloadCmd_FileHasNoName(t *testing.T) {
 		t.Fatalf("ui.New: %v", err)
 	}
 	ctx := ui.WithUI(context.Background(), u)
-	ctx = outfmt.WithMode(ctx, outfmt.ModeText)
+	ctx = outfmt.WithMode(ctx, outfmt.Mode{})
 
 	cmd := newDriveDownloadCmd(flags)
 	cmd.SetContext(ctx)

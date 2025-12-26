@@ -2,7 +2,8 @@ package cmd
 
 import (
 	"encoding/json"
-	"errors"
+	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"sort"
@@ -22,7 +23,7 @@ var (
 	authorizeGoogle  = googleauth.Authorize
 )
 
-func newAuthCmd() *cobra.Command {
+func newAuthCmd(flags *rootFlags) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "auth",
 		Short: "Authentication and accounts",
@@ -31,20 +32,26 @@ func newAuthCmd() *cobra.Command {
 	cmd.AddCommand(newAuthCredentialsCmd())
 	cmd.AddCommand(newAuthAddCmd())
 	cmd.AddCommand(newAuthListCmd())
-	cmd.AddCommand(newAuthRemoveCmd())
-	cmd.AddCommand(newAuthTokensCmd())
+	cmd.AddCommand(newAuthRemoveCmd(flags))
+	cmd.AddCommand(newAuthTokensCmd(flags))
 	return cmd
 }
 
 func newAuthCredentialsCmd() *cobra.Command {
 	return &cobra.Command{
-		Use:   "credentials <credentials.json>",
+		Use:   "credentials <credentials.json|->",
 		Short: "Store OAuth client credentials",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			u := ui.FromContext(cmd.Context())
 			inPath := args[0]
-			b, err := os.ReadFile(inPath)
+			var b []byte
+			var err error
+			if inPath == "-" {
+				b, err = io.ReadAll(os.Stdin)
+			} else {
+				b, err = os.ReadFile(inPath)
+			}
 			if err != nil {
 				return err
 			}
@@ -71,7 +78,7 @@ func newAuthCredentialsCmd() *cobra.Command {
 	}
 }
 
-func newAuthTokensCmd() *cobra.Command {
+func newAuthTokensCmd(flags *rootFlags) *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "tokens",
 		Short: "Manage stored refresh tokens",
@@ -117,11 +124,19 @@ func newAuthTokensCmd() *cobra.Command {
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			u := ui.FromContext(cmd.Context())
+			email := strings.TrimSpace(args[0])
+			if email == "" {
+				return usage("empty email")
+			}
+
+			if err := confirmDestructive(cmd, flags, fmt.Sprintf("delete stored token for %s", email)); err != nil {
+				return err
+			}
+
 			store, err := openSecretsStore()
 			if err != nil {
 				return err
 			}
-			email := args[0]
 			if err := store.DeleteToken(email); err != nil {
 				return err
 			}
@@ -142,7 +157,7 @@ func newAuthTokensCmd() *cobra.Command {
 
 func newAuthTokensExportCmd() *cobra.Command {
 	var outPath string
-	var force bool
+	var overwrite bool
 
 	cmd := &cobra.Command{
 		Use:   "export <email>",
@@ -152,11 +167,11 @@ func newAuthTokensExportCmd() *cobra.Command {
 			u := ui.FromContext(cmd.Context())
 			email := strings.TrimSpace(args[0])
 			if email == "" {
-				return errors.New("empty email")
+				return usage("empty email")
 			}
 			outPath = strings.TrimSpace(outPath)
 			if outPath == "" {
-				return errors.New("empty outPath")
+				return usage("empty outPath")
 			}
 
 			store, err := openSecretsStore()
@@ -173,7 +188,7 @@ func newAuthTokensExportCmd() *cobra.Command {
 			}
 
 			flags := os.O_WRONLY | os.O_CREATE | os.O_TRUNC
-			if !force {
+			if !overwrite {
 				flags = os.O_WRONLY | os.O_CREATE | os.O_EXCL
 			}
 			f, openErr := os.OpenFile(outPath, flags, 0o600)
@@ -223,19 +238,25 @@ func newAuthTokensExportCmd() *cobra.Command {
 	}
 
 	cmd.Flags().StringVar(&outPath, "out", "", "Output file path (required)")
-	cmd.Flags().BoolVar(&force, "force", false, "Overwrite output file if it exists")
+	cmd.Flags().BoolVar(&overwrite, "overwrite", false, "Overwrite output file if it exists")
 	return cmd
 }
 
 func newAuthTokensImportCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "import <inPath>",
+		Use:   "import <inPath|->",
 		Short: "Import a refresh token file into keyring (contains secrets)",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			u := ui.FromContext(cmd.Context())
 			inPath := args[0]
-			b, err := os.ReadFile(inPath)
+			var b []byte
+			var err error
+			if inPath == "-" {
+				b, err = io.ReadAll(os.Stdin)
+			} else {
+				b, err = os.ReadFile(inPath)
+			}
 			if err != nil {
 				return err
 			}
@@ -253,10 +274,10 @@ func newAuthTokensImportCmd() *cobra.Command {
 			}
 			ex.Email = strings.TrimSpace(ex.Email)
 			if ex.Email == "" {
-				return errors.New("missing email in token file")
+				return usage("missing email in token file")
 			}
 			if strings.TrimSpace(ex.RefreshToken) == "" {
-				return errors.New("missing refresh_token in token file")
+				return usage("missing refresh_token in token file")
 			}
 			var createdAt time.Time
 			if strings.TrimSpace(ex.CreatedAt) != "" {
@@ -438,14 +459,21 @@ func newAuthListCmd() *cobra.Command {
 	}
 }
 
-func newAuthRemoveCmd() *cobra.Command {
+func newAuthRemoveCmd(flags *rootFlags) *cobra.Command {
 	return &cobra.Command{
 		Use:   "remove <email>",
 		Short: "Remove a stored refresh token",
 		Args:  cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
 			u := ui.FromContext(cmd.Context())
-			email := args[0]
+			email := strings.TrimSpace(args[0])
+			if email == "" {
+				return usage("empty email")
+			}
+
+			if err := confirmDestructive(cmd, flags, fmt.Sprintf("remove stored token for %s", email)); err != nil {
+				return err
+			}
 			store, err := openSecretsStore()
 			if err != nil {
 				return err

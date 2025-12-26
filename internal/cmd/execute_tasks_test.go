@@ -43,7 +43,7 @@ func TestExecute_TasksLists_JSON(t *testing.T) {
 
 	out := captureStdout(t, func() {
 		_ = captureStderr(t, func() {
-			if err := Execute([]string{"--output", "json", "--account", "a@b.com", "tasks", "lists", "--max", "10"}); err != nil {
+			if err := Execute([]string{"--json", "--account", "a@b.com", "tasks", "lists", "--max", "10"}); err != nil {
 				t.Fatalf("Execute: %v", err)
 			}
 		})
@@ -101,7 +101,7 @@ func TestExecute_TasksListsCreate_JSON(t *testing.T) {
 
 	out := captureStdout(t, func() {
 		_ = captureStderr(t, func() {
-			if err := Execute([]string{"--output", "json", "--account", "a@b.com", "tasks", "lists", "create", "Teaching"}); err != nil {
+			if err := Execute([]string{"--json", "--account", "a@b.com", "tasks", "lists", "create", "Teaching"}); err != nil {
 				t.Fatalf("Execute: %v", err)
 			}
 		})
@@ -152,7 +152,7 @@ func TestExecute_TasksList_JSON(t *testing.T) {
 
 	out := captureStdout(t, func() {
 		_ = captureStderr(t, func() {
-			if err := Execute([]string{"--output", "json", "--account", "a@b.com", "tasks", "list", "l1"}); err != nil {
+			if err := Execute([]string{"--json", "--account", "a@b.com", "tasks", "list", "l1"}); err != nil {
 				t.Fatalf("Execute: %v", err)
 			}
 		})
@@ -212,7 +212,7 @@ func TestExecute_TasksAdd_JSON(t *testing.T) {
 
 	out := captureStdout(t, func() {
 		_ = captureStderr(t, func() {
-			if err := Execute([]string{"--output", "json", "--account", "a@b.com", "tasks", "add", "l1", "--title", "Hello"}); err != nil {
+			if err := Execute([]string{"--json", "--account", "a@b.com", "tasks", "add", "l1", "--title", "Hello"}); err != nil {
 				t.Fatalf("Execute: %v", err)
 			}
 		})
@@ -272,7 +272,7 @@ func TestExecute_TasksDone_JSON(t *testing.T) {
 
 	out := captureStdout(t, func() {
 		_ = captureStderr(t, func() {
-			if err := Execute([]string{"--output", "json", "--account", "a@b.com", "tasks", "done", "l1", "t1"}); err != nil {
+			if err := Execute([]string{"--json", "--account", "a@b.com", "tasks", "done", "l1", "t1"}); err != nil {
 				t.Fatalf("Execute: %v", err)
 			}
 		})
@@ -317,7 +317,7 @@ func TestExecute_TasksDelete_JSON(t *testing.T) {
 
 	out := captureStdout(t, func() {
 		_ = captureStderr(t, func() {
-			if err := Execute([]string{"--output", "json", "--account", "a@b.com", "tasks", "delete", "l1", "t1"}); err != nil {
+			if err := Execute([]string{"--json", "--force", "--account", "a@b.com", "tasks", "delete", "l1", "t1"}); err != nil {
 				t.Fatalf("Execute: %v", err)
 			}
 		})
@@ -374,7 +374,7 @@ func TestExecute_TasksUpdate_JSON(t *testing.T) {
 
 	out := captureStdout(t, func() {
 		_ = captureStderr(t, func() {
-			if err := Execute([]string{"--output", "json", "--account", "a@b.com", "tasks", "update", "l1", "t1", "--title", "New title"}); err != nil {
+			if err := Execute([]string{"--json", "--account", "a@b.com", "tasks", "update", "l1", "t1", "--title", "New title"}); err != nil {
 				t.Fatalf("Execute: %v", err)
 			}
 		})
@@ -433,7 +433,7 @@ func TestExecute_TasksUndo_JSON(t *testing.T) {
 
 	out := captureStdout(t, func() {
 		_ = captureStderr(t, func() {
-			if err := Execute([]string{"--output", "json", "--account", "a@b.com", "tasks", "undo", "l1", "t1"}); err != nil {
+			if err := Execute([]string{"--json", "--account", "a@b.com", "tasks", "undo", "l1", "t1"}); err != nil {
 				t.Fatalf("Execute: %v", err)
 			}
 		})
@@ -479,7 +479,7 @@ func TestExecute_TasksClear_JSON(t *testing.T) {
 
 	out := captureStdout(t, func() {
 		_ = captureStderr(t, func() {
-			if err := Execute([]string{"--output", "json", "--account", "a@b.com", "tasks", "clear", "l1"}); err != nil {
+			if err := Execute([]string{"--json", "--force", "--account", "a@b.com", "tasks", "clear", "l1"}); err != nil {
 				t.Fatalf("Execute: %v", err)
 			}
 		})

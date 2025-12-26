@@ -94,37 +94,37 @@ func TestExecute_CalendarMoreCommands_JSON(t *testing.T) {
 
 	_ = captureStderr(t, func() {
 		_ = captureStdout(t, func() {
-			if err := Execute([]string{"--output", "json", "--account", "a@b.com", "calendar", "acl", calendarID}); err != nil {
+			if err := Execute([]string{"--json", "--account", "a@b.com", "calendar", "acl", calendarID}); err != nil {
 				t.Fatalf("acl: %v", err)
 			}
 		})
 		_ = captureStdout(t, func() {
-			if err := Execute([]string{"--output", "json", "--account", "a@b.com", "calendar", "events", calendarID, "--from", "2025-12-17T00:00:00Z", "--to", "2025-12-18T00:00:00Z", "--query", "hello"}); err != nil {
+			if err := Execute([]string{"--json", "--account", "a@b.com", "calendar", "events", calendarID, "--from", "2025-12-17T00:00:00Z", "--to", "2025-12-18T00:00:00Z", "--query", "hello"}); err != nil {
 				t.Fatalf("events: %v", err)
 			}
 		})
 		_ = captureStdout(t, func() {
-			if err := Execute([]string{"--output", "json", "--account", "a@b.com", "calendar", "event", calendarID, eventID}); err != nil {
+			if err := Execute([]string{"--json", "--account", "a@b.com", "calendar", "event", calendarID, eventID}); err != nil {
 				t.Fatalf("event: %v", err)
 			}
 		})
 		_ = captureStdout(t, func() {
-			if err := Execute([]string{"--output", "json", "--account", "a@b.com", "calendar", "create", calendarID, "--summary", "S", "--from", "2025-12-17T10:00:00Z", "--to", "2025-12-17T11:00:00Z"}); err != nil {
+			if err := Execute([]string{"--json", "--account", "a@b.com", "calendar", "create", calendarID, "--summary", "S", "--from", "2025-12-17T10:00:00Z", "--to", "2025-12-17T11:00:00Z"}); err != nil {
 				t.Fatalf("create: %v", err)
 			}
 		})
 		_ = captureStdout(t, func() {
-			if err := Execute([]string{"--output", "json", "--account", "a@b.com", "calendar", "update", calendarID, eventID, "--summary", "S2"}); err != nil {
+			if err := Execute([]string{"--json", "--account", "a@b.com", "calendar", "update", calendarID, eventID, "--summary", "S2"}); err != nil {
 				t.Fatalf("update: %v", err)
 			}
 		})
 		_ = captureStdout(t, func() {
-			if err := Execute([]string{"--output", "json", "--account", "a@b.com", "calendar", "delete", calendarID, eventID}); err != nil {
+			if err := Execute([]string{"--json", "--force", "--account", "a@b.com", "calendar", "delete", calendarID, eventID}); err != nil {
 				t.Fatalf("delete: %v", err)
 			}
 		})
 		_ = captureStdout(t, func() {
-			if err := Execute([]string{"--output", "json", "--account", "a@b.com", "calendar", "freebusy", "c1", "--from", "2025-12-17T00:00:00Z", "--to", "2025-12-18T00:00:00Z"}); err != nil {
+			if err := Execute([]string{"--json", "--account", "a@b.com", "calendar", "freebusy", "c1", "--from", "2025-12-17T00:00:00Z", "--to", "2025-12-18T00:00:00Z"}); err != nil {
 				t.Fatalf("freebusy: %v", err)
 			}
 		})

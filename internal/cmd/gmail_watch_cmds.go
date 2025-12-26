@@ -52,7 +52,7 @@ func newGmailWatchStartCmd(flags *rootFlags) *cobra.Command {
 				return err
 			}
 			if strings.TrimSpace(topic) == "" {
-				return errors.New("--topic is required")
+				return usage("--topic is required")
 			}
 			ttl, err := parseDurationSeconds(ttlRaw)
 			if err != nil {
@@ -194,6 +194,11 @@ func newGmailWatchStopCmd(flags *rootFlags) *cobra.Command {
 			if err != nil {
 				return err
 			}
+
+			if err := confirmDestructive(cmd, flags, "stop gmail watch and clear stored state"); err != nil {
+				return err
+			}
+
 			svc, err := newGmailService(cmd.Context(), account)
 			if err != nil {
 				return err
@@ -239,19 +244,19 @@ func newGmailWatchServeCmd(flags *rootFlags) *cobra.Command {
 				return err
 			}
 			if !strings.HasPrefix(path, "/") {
-				return errors.New("--path must start with '/'")
+				return usage("--path must start with '/'")
 			}
 			if port <= 0 {
-				return errors.New("--port must be > 0")
+				return usage("--port must be > 0")
 			}
 			if !verifyOIDC && sharedToken == "" && !isLoopbackHost(bind) {
-				return errors.New("--verify-oidc or --token required when binding non-loopback")
+				return usage("--verify-oidc or --token required when binding non-loopback")
 			}
 			if oidcEmail != "" && !verifyOIDC {
-				return errors.New("--oidc-email requires --verify-oidc")
+				return usage("--oidc-email requires --verify-oidc")
 			}
 			if oidcAudience != "" && !verifyOIDC {
-				return errors.New("--oidc-audience requires --verify-oidc")
+				return usage("--oidc-audience requires --verify-oidc")
 			}
 
 			store, err := loadGmailWatchStore(account)
@@ -444,10 +449,10 @@ func requestGmailWatch(ctx context.Context, svc *gmail.Service, topic string, la
 func hookFromFlags(url, token string, includeBody bool, maxBytes int, maxBytesChanged bool, allowNoHook bool) (*gmailWatchHook, error) {
 	if strings.TrimSpace(url) == "" {
 		if token != "" {
-			return nil, errors.New("--hook-url required when using --hook-token")
+			return nil, usage("--hook-url required when using --hook-token")
 		}
 		if !allowNoHook && (includeBody || maxBytesChanged) {
-			return nil, errors.New("--hook-url required when setting hook options")
+			return nil, usage("--hook-url required when setting hook options")
 		}
 		return nil, nil
 	}
@@ -455,7 +460,7 @@ func hookFromFlags(url, token string, includeBody bool, maxBytes int, maxBytesCh
 		if includeBody {
 			maxBytes = defaultHookMaxBytes
 		} else if maxBytesChanged {
-			return nil, errors.New("--max-bytes must be > 0")
+			return nil, usage("--max-bytes must be > 0")
 		}
 	}
 	return &gmailWatchHook{

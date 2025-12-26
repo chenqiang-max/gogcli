@@ -100,7 +100,7 @@ func TestAuthTokens_ExportImportRoundtrip_JSON(t *testing.T) {
 
 	stdout := captureStdout(t, func() {
 		_ = captureStderr(t, func() {
-			if err := Execute([]string{"--output", "json", "auth", "tokens", "export", "a@b.com", "--out", outPath}); err != nil {
+			if err := Execute([]string{"--json", "auth", "tokens", "export", "a@b.com", "--out", outPath}); err != nil {
 				t.Fatalf("Execute export: %v", err)
 			}
 		})
@@ -132,7 +132,7 @@ func TestAuthTokens_ExportImportRoundtrip_JSON(t *testing.T) {
 
 	importOut := captureStdout(t, func() {
 		_ = captureStderr(t, func() {
-			if err := Execute([]string{"--output", "json", "auth", "tokens", "import", outPath}); err != nil {
+			if err := Execute([]string{"--json", "auth", "tokens", "import", outPath}); err != nil {
 				t.Fatalf("Execute import: %v", err)
 			}
 		})
@@ -153,7 +153,7 @@ func TestAuthTokens_ExportImportRoundtrip_JSON(t *testing.T) {
 }
 
 func TestAuthTokensExport_RequiresOut(t *testing.T) {
-	err := Execute([]string{"--output", "json", "auth", "tokens", "export", "a@b.com"})
+	err := Execute([]string{"--json", "auth", "tokens", "export", "a@b.com"})
 	if err == nil {
 		t.Fatalf("expected error")
 	}
@@ -174,7 +174,7 @@ func TestAuthListRemoveTokensListDelete_JSON(t *testing.T) {
 
 	listOut := captureStdout(t, func() {
 		_ = captureStderr(t, func() {
-			if err := Execute([]string{"--output", "json", "auth", "list"}); err != nil {
+			if err := Execute([]string{"--json", "auth", "list"}); err != nil {
 				t.Fatalf("Execute list: %v", err)
 			}
 		})
@@ -194,7 +194,7 @@ func TestAuthListRemoveTokensListDelete_JSON(t *testing.T) {
 	// Tokens list (keys).
 	keysOut := captureStdout(t, func() {
 		_ = captureStderr(t, func() {
-			if err := Execute([]string{"--output", "json", "auth", "tokens", "list"}); err != nil {
+			if err := Execute([]string{"--json", "auth", "tokens", "list"}); err != nil {
 				t.Fatalf("Execute tokens list: %v", err)
 			}
 		})
@@ -212,7 +212,7 @@ func TestAuthListRemoveTokensListDelete_JSON(t *testing.T) {
 	// Remove (auth remove)
 	rmOut := captureStdout(t, func() {
 		_ = captureStderr(t, func() {
-			if err := Execute([]string{"--output", "json", "auth", "remove", "b@b.com"}); err != nil {
+			if err := Execute([]string{"--json", "--force", "auth", "remove", "b@b.com"}); err != nil {
 				t.Fatalf("Execute remove: %v", err)
 			}
 		})
@@ -231,7 +231,7 @@ func TestAuthListRemoveTokensListDelete_JSON(t *testing.T) {
 	// Tokens delete (auth tokens delete)
 	delOut := captureStdout(t, func() {
 		_ = captureStderr(t, func() {
-			if err := Execute([]string{"--output", "json", "auth", "tokens", "delete", "a@b.com"}); err != nil {
+			if err := Execute([]string{"--json", "--force", "auth", "tokens", "delete", "a@b.com"}); err != nil {
 				t.Fatalf("Execute tokens delete: %v", err)
 			}
 		})
@@ -250,7 +250,7 @@ func TestAuthListRemoveTokensListDelete_JSON(t *testing.T) {
 	// Now empty.
 	emptyKeysOut := captureStdout(t, func() {
 		_ = captureStderr(t, func() {
-			if err := Execute([]string{"--output", "json", "auth", "tokens", "list"}); err != nil {
+			if err := Execute([]string{"--json", "auth", "tokens", "list"}); err != nil {
 				t.Fatalf("Execute tokens list: %v", err)
 			}
 		})

@@ -78,7 +78,7 @@ func TestExecute_GmailThread_Text_Download(t *testing.T) {
 
 	out := captureStdout(t, func() {
 		_ = captureStderr(t, func() {
-			if err := Execute([]string{"--output", "text", "--account", "a@b.com", "gmail", "thread", "t-thread-1", "--download"}); err != nil {
+			if err := Execute([]string{"--account", "a@b.com", "gmail", "thread", "t-thread-1", "--download"}); err != nil {
 				t.Fatalf("Execute: %v", err)
 			}
 		})
@@ -144,7 +144,7 @@ func TestExecute_GmailDraftsGet_Text_Download(t *testing.T) {
 
 	out := captureStdout(t, func() {
 		_ = captureStderr(t, func() {
-			if err := Execute([]string{"--output", "text", "--account", "a@b.com", "gmail", "drafts", "get", "d1", "--download"}); err != nil {
+			if err := Execute([]string{"--account", "a@b.com", "gmail", "drafts", "get", "d1", "--download"}); err != nil {
 				t.Fatalf("Execute: %v", err)
 			}
 		})

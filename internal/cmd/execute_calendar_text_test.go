@@ -51,7 +51,7 @@ func TestExecute_CalendarEvent_Text(t *testing.T) {
 
 	out := captureStdout(t, func() {
 		_ = captureStderr(t, func() {
-			if err := Execute([]string{"--output", "text", "--account", "a@b.com", "calendar", "event", "c1", "e1"}); err != nil {
+			if err := Execute([]string{"--account", "a@b.com", "calendar", "event", "c1", "e1"}); err != nil {
 				t.Fatalf("Execute: %v", err)
 			}
 		})
@@ -91,7 +91,7 @@ func TestExecute_CalendarAcl_Text(t *testing.T) {
 
 	out := captureStdout(t, func() {
 		_ = captureStderr(t, func() {
-			if err := Execute([]string{"--output", "text", "--account", "a@b.com", "calendar", "acl", "c1"}); err != nil {
+			if err := Execute([]string{"--account", "a@b.com", "calendar", "acl", "c1"}); err != nil {
 				t.Fatalf("Execute: %v", err)
 			}
 		})
@@ -132,7 +132,7 @@ func TestExecute_CalendarCalendars_Text(t *testing.T) {
 
 	out := captureStdout(t, func() {
 		_ = captureStderr(t, func() {
-			if err := Execute([]string{"--output", "text", "--account", "a@b.com", "calendar", "calendars"}); err != nil {
+			if err := Execute([]string{"--account", "a@b.com", "calendar", "calendars"}); err != nil {
 				t.Fatalf("Execute: %v", err)
 			}
 		})

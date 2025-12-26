@@ -1,8 +1,8 @@
 package cmd
 
 import (
-	"errors"
 	"fmt"
+	"io"
 	"os"
 	"strings"
 	"text/tabwriter"
@@ -72,20 +72,27 @@ func newContactsListCmd(flags *rootFlags) *cobra.Command {
 				return nil
 			}
 
-			tw := tabwriter.NewWriter(os.Stdout, 0, 4, 2, ' ', 0)
-			fmt.Fprintln(tw, "RESOURCE\tNAME\tEMAIL\tPHONE")
+			var w io.Writer = os.Stdout
+			var tw *tabwriter.Writer
+			if !outfmt.IsPlain(cmd.Context()) {
+				tw = tabwriter.NewWriter(os.Stdout, 0, 4, 2, ' ', 0)
+				w = tw
+			}
+			fmt.Fprintln(w, "RESOURCE\tNAME\tEMAIL\tPHONE")
 			for _, p := range resp.Connections {
 				if p == nil {
 					continue
 				}
-				fmt.Fprintf(tw, "%s\t%s\t%s\t%s\n",
+				fmt.Fprintf(w, "%s\t%s\t%s\t%s\n",
 					p.ResourceName,
 					sanitizeTab(primaryName(p)),
 					sanitizeTab(primaryEmail(p)),
 					sanitizeTab(primaryPhone(p)),
 				)
 			}
-			_ = tw.Flush()
+			if tw != nil {
+				_ = tw.Flush()
+			}
 
 			if resp.NextPageToken != "" {
 				u.Err().Printf("# Next page: --page %s", resp.NextPageToken)
@@ -112,7 +119,7 @@ func newContactsGetCmd(flags *rootFlags) *cobra.Command {
 			}
 			identifier := strings.TrimSpace(args[0])
 			if identifier == "" {
-				return errors.New("empty identifier")
+				return usage("empty identifier")
 			}
 
 			svc, err := newPeopleContactsService(cmd.Context(), account)
@@ -191,7 +198,7 @@ func newContactsCreateCmd(flags *rootFlags) *cobra.Command {
 				return err
 			}
 			if strings.TrimSpace(given) == "" {
-				return errors.New("required: --given")
+				return usage("required: --given")
 			}
 
 			svc, err := newPeopleContactsService(cmd.Context(), account)
@@ -249,7 +256,11 @@ func newContactsUpdateCmd(flags *rootFlags) *cobra.Command {
 			}
 			resourceName := strings.TrimSpace(args[0])
 			if !strings.HasPrefix(resourceName, "people/") {
-				return errors.New("resourceName must start with people/")
+				return usage("resourceName must start with people/")
+			}
+
+			if err := confirmDestructive(cmd, flags, fmt.Sprintf("delete contact %s", resourceName)); err != nil {
+				return err
 			}
 
 			svc, err := newPeopleContactsService(cmd.Context(), account)
@@ -299,7 +310,7 @@ func newContactsUpdateCmd(flags *rootFlags) *cobra.Command {
 			}
 
 			if len(updateFields) == 0 {
-				return errors.New("no updates provided")
+				return usage("no updates provided")
 			}
 
 			updated, err := svc.People.UpdateContact(resourceName, existing).
@@ -336,7 +347,7 @@ func newContactsDeleteCmd(flags *rootFlags) *cobra.Command {
 			}
 			resourceName := strings.TrimSpace(args[0])
 			if !strings.HasPrefix(resourceName, "people/") {
-				return errors.New("resourceName must start with people/")
+				return usage("resourceName must start with people/")
 			}
 
 			svc, err := newPeopleContactsService(cmd.Context(), account)

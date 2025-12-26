@@ -59,7 +59,7 @@ func TestExecute_GmailSend_ReplyToHeader(t *testing.T) {
 	_ = captureStdout(t, func() {
 		_ = captureStderr(t, func() {
 			if err := Execute([]string{
-				"--output", "json",
+				"--json",
 				"--account", "a@b.com",
 				"gmail", "send",
 				"--to", "x@y.com",
@@ -141,7 +141,7 @@ func TestExecute_GmailSend_ReplyToMessageID(t *testing.T) {
 	_ = captureStdout(t, func() {
 		_ = captureStderr(t, func() {
 			if err := Execute([]string{
-				"--output", "json",
+				"--json",
 				"--account", "a@b.com",
 				"gmail", "send",
 				"--to", "x@y.com",
@@ -226,7 +226,7 @@ func TestExecute_GmailDraftsCreate_ReplyToMessageID(t *testing.T) {
 	_ = captureStdout(t, func() {
 		_ = captureStderr(t, func() {
 			if err := Execute([]string{
-				"--output", "json",
+				"--json",
 				"--account", "a@b.com",
 				"gmail", "drafts", "create",
 				"--to", "x@y.com",

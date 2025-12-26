@@ -47,7 +47,7 @@ func TestExecute_DriveGet_Text(t *testing.T) {
 
 	out := captureStdout(t, func() {
 		_ = captureStderr(t, func() {
-			if err := Execute([]string{"--output", "text", "--account", "a@b.com", "drive", "get", "id1"}); err != nil {
+			if err := Execute([]string{"--account", "a@b.com", "drive", "get", "id1"}); err != nil {
 				t.Fatalf("Execute: %v", err)
 			}
 		})
@@ -83,7 +83,7 @@ func TestExecute_DrivePermissions_Text_NoPermissions(t *testing.T) {
 
 	errOut := captureStderr(t, func() {
 		_ = captureStdout(t, func() {
-			if err := Execute([]string{"--output", "text", "--account", "a@b.com", "drive", "permissions", "id1"}); err != nil {
+			if err := Execute([]string{"--account", "a@b.com", "drive", "permissions", "id1"}); err != nil {
 				t.Fatalf("Execute: %v", err)
 			}
 		})
@@ -124,7 +124,7 @@ func TestExecute_DrivePermissions_Text_WithPermissions(t *testing.T) {
 
 	out := captureStdout(t, func() {
 		_ = captureStderr(t, func() {
-			if err := Execute([]string{"--output", "text", "--account", "a@b.com", "drive", "permissions", "id1"}); err != nil {
+			if err := Execute([]string{"--account", "a@b.com", "drive", "permissions", "id1"}); err != nil {
 				t.Fatalf("Execute: %v", err)
 			}
 		})
@@ -165,7 +165,7 @@ func TestExecute_DriveSearch_Text(t *testing.T) {
 
 	out := captureStdout(t, func() {
 		errOut := captureStderr(t, func() {
-			if err := Execute([]string{"--output", "text", "--account", "a@b.com", "drive", "search", "Doc", "--max", "1"}); err != nil {
+			if err := Execute([]string{"--account", "a@b.com", "drive", "search", "Doc", "--max", "1"}); err != nil {
 				t.Fatalf("Execute: %v", err)
 			}
 		})

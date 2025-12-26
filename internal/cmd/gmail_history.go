@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"errors"
 	"os"
 	"strings"
 
@@ -26,7 +25,7 @@ func newGmailHistoryCmd(flags *rootFlags) *cobra.Command {
 				return err
 			}
 			if strings.TrimSpace(since) == "" {
-				return errors.New("--since is required")
+				return usage("--since is required")
 			}
 			startID, err := parseHistoryID(since)
 			if err != nil {

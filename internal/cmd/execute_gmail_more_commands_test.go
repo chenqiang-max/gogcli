@@ -129,7 +129,7 @@ func TestExecute_GmailThreadDraftsSend_JSON(t *testing.T) {
 
 	_ = captureStderr(t, func() {
 		out := captureStdout(t, func() {
-			if err := Execute([]string{"--output", "json", "--account", "a@b.com", "gmail", "thread", "t1", "--download"}); err != nil {
+			if err := Execute([]string{"--json", "--account", "a@b.com", "gmail", "thread", "t1", "--download"}); err != nil {
 				t.Fatalf("thread: %v", err)
 			}
 		})
@@ -148,32 +148,32 @@ func TestExecute_GmailThreadDraftsSend_JSON(t *testing.T) {
 		}
 
 		_ = captureStdout(t, func() {
-			if err := Execute([]string{"--output", "json", "--account", "a@b.com", "gmail", "drafts", "list"}); err != nil {
+			if err := Execute([]string{"--json", "--account", "a@b.com", "gmail", "drafts", "list"}); err != nil {
 				t.Fatalf("drafts list: %v", err)
 			}
 		})
 		_ = captureStdout(t, func() {
-			if err := Execute([]string{"--output", "json", "--account", "a@b.com", "gmail", "drafts", "get", "d1", "--download"}); err != nil {
+			if err := Execute([]string{"--json", "--account", "a@b.com", "gmail", "drafts", "get", "d1", "--download"}); err != nil {
 				t.Fatalf("drafts get: %v", err)
 			}
 		})
 		_ = captureStdout(t, func() {
-			if err := Execute([]string{"--output", "json", "--account", "a@b.com", "gmail", "drafts", "create", "--to", "x@y.com", "--subject", "S", "--body", "B"}); err != nil {
+			if err := Execute([]string{"--json", "--account", "a@b.com", "gmail", "drafts", "create", "--to", "x@y.com", "--subject", "S", "--body", "B"}); err != nil {
 				t.Fatalf("drafts create: %v", err)
 			}
 		})
 		_ = captureStdout(t, func() {
-			if err := Execute([]string{"--output", "json", "--account", "a@b.com", "gmail", "drafts", "send", "d1"}); err != nil {
+			if err := Execute([]string{"--json", "--account", "a@b.com", "gmail", "drafts", "send", "d1"}); err != nil {
 				t.Fatalf("drafts send: %v", err)
 			}
 		})
 		_ = captureStdout(t, func() {
-			if err := Execute([]string{"--output", "json", "--account", "a@b.com", "gmail", "drafts", "delete", "d1"}); err != nil {
+			if err := Execute([]string{"--json", "--force", "--account", "a@b.com", "gmail", "drafts", "delete", "d1"}); err != nil {
 				t.Fatalf("drafts delete: %v", err)
 			}
 		})
 		_ = captureStdout(t, func() {
-			if err := Execute([]string{"--output", "json", "--account", "a@b.com", "gmail", "send", "--to", "x@y.com", "--subject", "S", "--body", "B"}); err != nil {
+			if err := Execute([]string{"--json", "--account", "a@b.com", "gmail", "send", "--to", "x@y.com", "--subject", "S", "--body", "B"}); err != nil {
 				t.Fatalf("send: %v", err)
 			}
 		})

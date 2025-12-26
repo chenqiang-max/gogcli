@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"encoding/json"
-	"errors"
 	"strings"
 	"time"
 )
@@ -100,7 +99,7 @@ func (p *gmailPushPayload) UnmarshalJSON(data []byte) error {
 			return nil
 		}
 	}
-	return errors.New("historyId must be string or number")
+	return usage("historyId must be string or number")
 }
 
 type gmailHookMessage struct {

@@ -2,8 +2,8 @@ package cmd
 
 import (
 	"encoding/base64"
-	"errors"
 	"fmt"
+	"io"
 	"os"
 	"strings"
 	"text/tabwriter"
@@ -80,16 +80,23 @@ func newGmailDraftsListCmd(flags *rootFlags) *cobra.Command {
 				return nil
 			}
 
-			tw := tabwriter.NewWriter(os.Stdout, 0, 4, 2, ' ', 0)
-			fmt.Fprintln(tw, "ID\tMESSAGE_ID")
+			var w io.Writer = os.Stdout
+			var tw *tabwriter.Writer
+			if !outfmt.IsPlain(cmd.Context()) {
+				tw = tabwriter.NewWriter(os.Stdout, 0, 4, 2, ' ', 0)
+				w = tw
+			}
+			fmt.Fprintln(w, "ID\tMESSAGE_ID")
 			for _, d := range resp.Drafts {
 				msgID := ""
 				if d.Message != nil {
 					msgID = d.Message.Id
 				}
-				fmt.Fprintf(tw, "%s\t%s\n", d.Id, msgID)
+				fmt.Fprintf(w, "%s\t%s\n", d.Id, msgID)
 			}
-			_ = tw.Flush()
+			if tw != nil {
+				_ = tw.Flush()
+			}
 
 			if resp.NextPageToken != "" {
 				u.Err().Printf("# Next page: --page %s", resp.NextPageToken)
@@ -117,6 +124,10 @@ func newGmailDraftsGetCmd(flags *rootFlags) *cobra.Command {
 				return err
 			}
 			draftID := args[0]
+
+			if err := confirmDestructive(cmd, flags, fmt.Sprintf("delete gmail draft %s", draftID)); err != nil {
+				return err
+			}
 
 			svc, err := newGmailService(cmd.Context(), account)
 			if err != nil {
@@ -307,10 +318,10 @@ func newGmailDraftsCreateCmd(flags *rootFlags) *cobra.Command {
 				return err
 			}
 			if strings.TrimSpace(to) == "" || strings.TrimSpace(subject) == "" {
-				return errors.New("required: --to, --subject")
+				return usage("required: --to, --subject")
 			}
 			if strings.TrimSpace(body) == "" && strings.TrimSpace(bodyHTML) == "" {
-				return errors.New("required: --body or --body-html")
+				return usage("required: --body or --body-html")
 			}
 
 			svc, err := newGmailService(cmd.Context(), account)

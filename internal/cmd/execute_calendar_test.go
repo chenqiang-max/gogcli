@@ -43,7 +43,7 @@ func TestExecute_CalendarCalendars_JSON(t *testing.T) {
 
 	out := captureStdout(t, func() {
 		_ = captureStderr(t, func() {
-			if err := Execute([]string{"--output", "json", "--account", "a@b.com", "calendar", "calendars"}); err != nil {
+			if err := Execute([]string{"--json", "--account", "a@b.com", "calendar", "calendars"}); err != nil {
 				t.Fatalf("Execute: %v", err)
 			}
 		})

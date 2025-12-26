@@ -2,7 +2,6 @@ package ui
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -22,6 +21,10 @@ type UI struct {
 	err *Printer
 }
 
+type ParseError struct{ msg string }
+
+func (e *ParseError) Error() string { return e.msg }
+
 func New(opts Options) (*UI, error) {
 	if opts.Stdout == nil {
 		opts.Stdout = os.Stdout
@@ -35,7 +38,7 @@ func New(opts Options) (*UI, error) {
 		colorMode = "auto"
 	}
 	if colorMode != "auto" && colorMode != "always" && colorMode != "never" {
-		return nil, errors.New("invalid --color (expected auto|always|never)")
+		return nil, &ParseError{msg: "invalid --color (expected auto|always|never)"}
 	}
 
 	out := termenv.NewOutput(opts.Stdout, termenv.WithProfile(termenv.EnvColorProfile()))

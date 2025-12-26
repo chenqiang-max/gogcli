@@ -6,40 +6,27 @@ import (
 	"testing"
 )
 
-func TestParse(t *testing.T) {
-	tests := []struct {
-		in      string
-		want    Mode
-		wantErr bool
-	}{
-		{"", ModeText, false},
-		{"text", ModeText, false},
-		{"json", ModeJSON, false},
-		{" JSON ", ModeJSON, false},
-		{"nope", "", true},
+func TestFromFlags(t *testing.T) {
+	if _, err := FromFlags(true, true); err == nil {
+		t.Fatalf("expected error when combining --json and --plain")
 	}
-	for _, tt := range tests {
-		got, err := Parse(tt.in)
-		if tt.wantErr && err == nil {
-			t.Fatalf("Parse(%q): expected error", tt.in)
-		}
-		if !tt.wantErr && err != nil {
-			t.Fatalf("Parse(%q): %v", tt.in, err)
-		}
-		if got != tt.want {
-			t.Fatalf("Parse(%q)=%q want %q", tt.in, got, tt.want)
-		}
+	got, err := FromFlags(true, false)
+	if err != nil {
+		t.Fatalf("unexpected err: %v", err)
+	}
+	if !got.JSON || got.Plain {
+		t.Fatalf("unexpected mode: %#v", got)
 	}
 }
 
 func TestContextMode(t *testing.T) {
 	ctx := context.Background()
-	if FromContext(ctx) != ModeText {
+	if IsJSON(ctx) || IsPlain(ctx) {
 		t.Fatalf("expected default text")
 	}
-	ctx = WithMode(ctx, ModeJSON)
-	if !IsJSON(ctx) {
-		t.Fatalf("expected json")
+	ctx = WithMode(ctx, Mode{JSON: true})
+	if !IsJSON(ctx) || IsPlain(ctx) {
+		t.Fatalf("expected json-only")
 	}
 }
 

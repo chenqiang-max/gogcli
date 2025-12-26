@@ -49,7 +49,7 @@ func TestExecute_ContactsList_JSON(t *testing.T) {
 
 	out := captureStdout(t, func() {
 		_ = captureStderr(t, func() {
-			if err := Execute([]string{"--output", "json", "--account", "a@b.com", "contacts", "list", "--max", "1"}); err != nil {
+			if err := Execute([]string{"--json", "--account", "a@b.com", "contacts", "list", "--max", "1"}); err != nil {
 				t.Fatalf("Execute: %v", err)
 			}
 		})
@@ -112,7 +112,7 @@ func TestExecute_ContactsGet_ByEmail_JSON(t *testing.T) {
 
 	out := captureStdout(t, func() {
 		_ = captureStderr(t, func() {
-			if err := Execute([]string{"--output", "json", "--account", "a@b.com", "contacts", "get", "ada@example.com"}); err != nil {
+			if err := Execute([]string{"--json", "--account", "a@b.com", "contacts", "get", "ada@example.com"}); err != nil {
 				t.Fatalf("Execute: %v", err)
 			}
 		})

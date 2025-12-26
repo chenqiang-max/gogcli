@@ -70,7 +70,7 @@ func TestDriveLsCmd_TextAndJSON(t *testing.T) {
 		t.Fatalf("ui.New: %v", err)
 	}
 	ctx := ui.WithUI(context.Background(), u)
-	ctx = outfmt.WithMode(ctx, outfmt.ModeText)
+	ctx = outfmt.WithMode(ctx, outfmt.Mode{})
 
 	textOut := captureStdout(t, func() {
 		cmd := newDriveLsCmd(flags)
@@ -101,7 +101,7 @@ func TestDriveLsCmd_TextAndJSON(t *testing.T) {
 		t.Fatalf("ui.New: %v", err)
 	}
 	ctx2 := ui.WithUI(context.Background(), u2)
-	ctx2 = outfmt.WithMode(ctx2, outfmt.ModeJSON)
+	ctx2 = outfmt.WithMode(ctx2, outfmt.Mode{JSON: true})
 
 	jsonOut := captureStdout(t, func() {
 		cmd := newDriveLsCmd(flags)
@@ -124,5 +124,26 @@ func TestDriveLsCmd_TextAndJSON(t *testing.T) {
 	}
 	if parsed.NextPageToken != "npt" || len(parsed.Files) != 2 {
 		t.Fatalf("unexpected json: %#v", parsed)
+	}
+
+	// Plain mode: stable TSV (tabs preserved).
+	var errBuf3 bytes.Buffer
+	u3, err := ui.New(ui.Options{Stdout: io.Discard, Stderr: &errBuf3, Color: "never"})
+	if err != nil {
+		t.Fatalf("ui.New: %v", err)
+	}
+	ctx3 := ui.WithUI(context.Background(), u3)
+	ctx3 = outfmt.WithMode(ctx3, outfmt.Mode{Plain: true})
+
+	plainOut := captureStdout(t, func() {
+		cmd := newDriveLsCmd(flags)
+		cmd.SetContext(ctx3)
+		cmd.SetArgs([]string{})
+		if execErr := cmd.Execute(); execErr != nil {
+			t.Fatalf("execute: %v", execErr)
+		}
+	})
+	if !strings.Contains(plainOut, "ID\tNAME\tTYPE\tSIZE\tMODIFIED") {
+		t.Fatalf("expected TSV header, got: %q", plainOut)
 	}
 }

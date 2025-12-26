@@ -60,7 +60,7 @@ func TestExecute_DriveDownload_WithOutFile_JSON(t *testing.T) {
 	stdout := captureStdout(t, func() {
 		_ = captureStderr(t, func() {
 			if execErr := Execute([]string{
-				"--output", "json",
+				"--json",
 				"--account", "a@b.com",
 				"drive", "download", "id1",
 				"--out", outPath,
@@ -135,7 +135,7 @@ func TestExecute_DriveDownload_WithOutDir_JSON(t *testing.T) {
 	stdout := captureStdout(t, func() {
 		_ = captureStderr(t, func() {
 			if execErr := Execute([]string{
-				"--output", "json",
+				"--json",
 				"--account", "a@b.com",
 				"drive", "download", "id1",
 				"--out", outDir,

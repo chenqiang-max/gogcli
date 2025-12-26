@@ -49,7 +49,7 @@ func TestExecute_ContactsDirectoryList_Text(t *testing.T) {
 
 	out := captureStdout(t, func() {
 		errOut := captureStderr(t, func() {
-			if err := Execute([]string{"--output", "text", "--account", "a@b.com", "contacts", "directory", "list", "--max", "1"}); err != nil {
+			if err := Execute([]string{"--account", "a@b.com", "contacts", "directory", "list", "--max", "1"}); err != nil {
 				t.Fatalf("Execute: %v", err)
 			}
 		})

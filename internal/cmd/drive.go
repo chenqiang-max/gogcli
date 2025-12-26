@@ -98,11 +98,16 @@ func newDriveLsCmd(flags *rootFlags) *cobra.Command {
 				return nil
 			}
 
-			tw := tabwriter.NewWriter(os.Stdout, 0, 4, 2, ' ', 0)
-			fmt.Fprintln(tw, "ID\tNAME\tTYPE\tSIZE\tMODIFIED")
+			var w io.Writer = os.Stdout
+			var tw *tabwriter.Writer
+			if !outfmt.IsPlain(cmd.Context()) {
+				tw = tabwriter.NewWriter(os.Stdout, 0, 4, 2, ' ', 0)
+				w = tw
+			}
+			fmt.Fprintln(w, "ID\tNAME\tTYPE\tSIZE\tMODIFIED")
 			for _, f := range resp.Files {
 				fmt.Fprintf(
-					tw,
+					w,
 					"%s\t%s\t%s\t%s\t%s\n",
 					f.Id,
 					f.Name,
@@ -111,7 +116,9 @@ func newDriveLsCmd(flags *rootFlags) *cobra.Command {
 					formatDateTime(f.ModifiedTime),
 				)
 			}
-			_ = tw.Flush()
+			if tw != nil {
+				_ = tw.Flush()
+			}
 
 			if resp.NextPageToken != "" {
 				u.Err().Printf("# Next page: --page %s", resp.NextPageToken)
@@ -172,11 +179,16 @@ func newDriveSearchCmd(flags *rootFlags) *cobra.Command {
 				return nil
 			}
 
-			tw := tabwriter.NewWriter(os.Stdout, 0, 4, 2, ' ', 0)
-			fmt.Fprintln(tw, "ID\tNAME\tTYPE\tSIZE\tMODIFIED")
+			var w io.Writer = os.Stdout
+			var tw *tabwriter.Writer
+			if !outfmt.IsPlain(cmd.Context()) {
+				tw = tabwriter.NewWriter(os.Stdout, 0, 4, 2, ' ', 0)
+				w = tw
+			}
+			fmt.Fprintln(w, "ID\tNAME\tTYPE\tSIZE\tMODIFIED")
 			for _, f := range resp.Files {
 				fmt.Fprintf(
-					tw,
+					w,
 					"%s\t%s\t%s\t%s\t%s\n",
 					f.Id,
 					f.Name,
@@ -185,7 +197,9 @@ func newDriveSearchCmd(flags *rootFlags) *cobra.Command {
 					formatDateTime(f.ModifiedTime),
 				)
 			}
-			_ = tw.Flush()
+			if tw != nil {
+				_ = tw.Flush()
+			}
 
 			if resp.NextPageToken != "" {
 				u.Err().Printf("# Next page: --page %s", resp.NextPageToken)
@@ -211,6 +225,10 @@ func newDriveGetCmd(flags *rootFlags) *cobra.Command {
 				return err
 			}
 			fileID := args[0]
+
+			if err := confirmDestructive(cmd, flags, fmt.Sprintf("delete drive file %s", fileID)); err != nil {
+				return err
+			}
 
 			svc, err := newDriveService(cmd.Context(), account)
 			if err != nil {
@@ -573,13 +591,13 @@ func newDriveShareCmd(flags *rootFlags) *cobra.Command {
 			fileID := args[0]
 
 			if !anyone && email == "" {
-				return errors.New("must specify --anyone or --email")
+				return usage("must specify --anyone or --email")
 			}
 			if role == "" {
 				role = "reader"
 			}
 			if role != "reader" && role != "writer" {
-				return errors.New("invalid --role (expected reader|writer)")
+				return usage("invalid --role (expected reader|writer)")
 			}
 
 			svc, err := newDriveService(cmd.Context(), account)
@@ -644,6 +662,10 @@ func newDriveUnshareCmd(flags *rootFlags) *cobra.Command {
 			}
 			fileID := args[0]
 			permissionID := args[1]
+
+			if err := confirmDestructive(cmd, flags, fmt.Sprintf("remove permission %s from drive file %s", permissionID, fileID)); err != nil {
+				return err
+			}
 
 			svc, err := newDriveService(cmd.Context(), account)
 			if err != nil {
@@ -713,16 +735,23 @@ func newDrivePermissionsCmd(flags *rootFlags) *cobra.Command {
 				return nil
 			}
 
-			tw := tabwriter.NewWriter(os.Stdout, 0, 4, 2, ' ', 0)
-			fmt.Fprintln(tw, "ID\tTYPE\tROLE\tEMAIL")
+			var w io.Writer = os.Stdout
+			var tw *tabwriter.Writer
+			if !outfmt.IsPlain(cmd.Context()) {
+				tw = tabwriter.NewWriter(os.Stdout, 0, 4, 2, ' ', 0)
+				w = tw
+			}
+			fmt.Fprintln(w, "ID\tTYPE\tROLE\tEMAIL")
 			for _, p := range resp.Permissions {
 				email := p.EmailAddress
 				if email == "" {
 					email = "-"
 				}
-				fmt.Fprintf(tw, "%s\t%s\t%s\t%s\n", p.Id, p.Type, p.Role, email)
+				fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", p.Id, p.Type, p.Role, email)
 			}
-			_ = tw.Flush()
+			if tw != nil {
+				_ = tw.Flush()
+			}
 
 			if resp.NextPageToken != "" {
 				u.Err().Printf("# Next page: --page %s", resp.NextPageToken)

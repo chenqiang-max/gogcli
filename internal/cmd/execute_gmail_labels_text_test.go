@@ -57,7 +57,7 @@ func TestExecute_GmailLabelsGet_Text(t *testing.T) {
 
 	out := captureStdout(t, func() {
 		_ = captureStderr(t, func() {
-			if err := Execute([]string{"--output", "text", "--account", "a@b.com", "gmail", "labels", "get", "INBOX"}); err != nil {
+			if err := Execute([]string{"--account", "a@b.com", "gmail", "labels", "get", "INBOX"}); err != nil {
 				t.Fatalf("Execute: %v", err)
 			}
 		})

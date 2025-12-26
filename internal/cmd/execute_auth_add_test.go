@@ -30,7 +30,7 @@ func TestExecute_AuthAdd_JSON(t *testing.T) {
 
 	out := captureStdout(t, func() {
 		_ = captureStderr(t, func() {
-			if err := Execute([]string{"--output", "json", "auth", "add", "a@b.com", "--services", "calendar,gmail"}); err != nil {
+			if err := Execute([]string{"--json", "auth", "add", "a@b.com", "--services", "calendar,gmail"}); err != nil {
 				t.Fatalf("Execute: %v", err)
 			}
 		})

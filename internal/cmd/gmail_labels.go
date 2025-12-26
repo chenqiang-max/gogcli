@@ -1,8 +1,8 @@
 package cmd
 
 import (
-	"errors"
 	"fmt"
+	"io"
 	"os"
 	"strings"
 	"text/tabwriter"
@@ -47,7 +47,7 @@ func newGmailLabelsGetCmd(flags *rootFlags) *cobra.Command {
 			}
 			raw := strings.TrimSpace(args[0])
 			if raw == "" {
-				return errors.New("empty label")
+				return usage("empty label")
 			}
 			id := raw
 			if v, ok := idMap[strings.ToLower(raw)]; ok {
@@ -103,12 +103,19 @@ func newGmailLabelsListCmd(flags *rootFlags) *cobra.Command {
 				return nil
 			}
 
-			tw := tabwriter.NewWriter(os.Stdout, 0, 4, 2, ' ', 0)
-			fmt.Fprintln(tw, "ID\tNAME\tTYPE")
-			for _, l := range resp.Labels {
-				fmt.Fprintf(tw, "%s\t%s\t%s\n", l.Id, l.Name, l.Type)
+			var w io.Writer = os.Stdout
+			var tw *tabwriter.Writer
+			if !outfmt.IsPlain(cmd.Context()) {
+				tw = tabwriter.NewWriter(os.Stdout, 0, 4, 2, ' ', 0)
+				w = tw
 			}
-			_ = tw.Flush()
+			fmt.Fprintln(w, "ID\tNAME\tTYPE")
+			for _, l := range resp.Labels {
+				fmt.Fprintf(w, "%s\t%s\t%s\n", l.Id, l.Name, l.Type)
+			}
+			if tw != nil {
+				_ = tw.Flush()
+			}
 			return nil
 		},
 	}
@@ -132,7 +139,7 @@ func newGmailLabelsModifyCmd(flags *rootFlags) *cobra.Command {
 			addLabels := splitCSV(add)
 			removeLabels := splitCSV(remove)
 			if len(addLabels) == 0 && len(removeLabels) == 0 {
-				return errors.New("must specify --add and/or --remove")
+				return usage("must specify --add and/or --remove")
 			}
 
 			svc, err := newGmailService(cmd.Context(), account)

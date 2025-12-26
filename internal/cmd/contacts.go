@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"strings"
 	"text/tabwriter"
@@ -83,15 +84,20 @@ func newContactsSearchCmd(flags *rootFlags) *cobra.Command {
 				return nil
 			}
 
-			tw := tabwriter.NewWriter(os.Stdout, 0, 4, 2, ' ', 0)
-			fmt.Fprintln(tw, "RESOURCE\tNAME\tEMAIL\tPHONE")
+			var w io.Writer = os.Stdout
+			var tw *tabwriter.Writer
+			if !outfmt.IsPlain(cmd.Context()) {
+				tw = tabwriter.NewWriter(os.Stdout, 0, 4, 2, ' ', 0)
+				w = tw
+			}
+			fmt.Fprintln(w, "RESOURCE\tNAME\tEMAIL\tPHONE")
 			for _, r := range resp.Results {
 				p := r.Person
 				if p == nil {
 					continue
 				}
 				fmt.Fprintf(
-					tw,
+					w,
 					"%s\t%s\t%s\t%s\n",
 					p.ResourceName,
 					sanitizeTab(primaryName(p)),
@@ -99,7 +105,9 @@ func newContactsSearchCmd(flags *rootFlags) *cobra.Command {
 					sanitizeTab(primaryPhone(p)),
 				)
 			}
-			_ = tw.Flush()
+			if tw != nil {
+				_ = tw.Flush()
+			}
 			return nil
 		},
 	}

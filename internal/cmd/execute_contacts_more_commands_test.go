@@ -124,42 +124,42 @@ func TestExecute_ContactsMoreCommands_JSON(t *testing.T) {
 
 	_ = captureStderr(t, func() {
 		_ = captureStdout(t, func() {
-			if err := Execute([]string{"--output", "json", "--account", "a@b.com", "contacts", "search", "Ada"}); err != nil {
+			if err := Execute([]string{"--json", "--account", "a@b.com", "contacts", "search", "Ada"}); err != nil {
 				t.Fatalf("search: %v", err)
 			}
 		})
 		_ = captureStdout(t, func() {
-			if err := Execute([]string{"--output", "json", "--account", "a@b.com", "contacts", "create", "--given", "Ada", "--email", "ada@example.com", "--phone", "+1"}); err != nil {
+			if err := Execute([]string{"--json", "--account", "a@b.com", "contacts", "create", "--given", "Ada", "--email", "ada@example.com", "--phone", "+1"}); err != nil {
 				t.Fatalf("create: %v", err)
 			}
 		})
 		_ = captureStdout(t, func() {
-			if err := Execute([]string{"--output", "json", "--account", "a@b.com", "contacts", "update", "people/c1", "--given", "Ada", "--family", "Updated"}); err != nil {
+			if err := Execute([]string{"--json", "--account", "a@b.com", "contacts", "update", "people/c1", "--given", "Ada", "--family", "Updated"}); err != nil {
 				t.Fatalf("update: %v", err)
 			}
 		})
 		_ = captureStdout(t, func() {
-			if err := Execute([]string{"--output", "json", "--account", "a@b.com", "contacts", "delete", "people/c1"}); err != nil {
+			if err := Execute([]string{"--json", "--force", "--account", "a@b.com", "contacts", "delete", "people/c1"}); err != nil {
 				t.Fatalf("delete: %v", err)
 			}
 		})
 		_ = captureStdout(t, func() {
-			if err := Execute([]string{"--output", "json", "--account", "a@b.com", "contacts", "directory", "list", "--max", "1"}); err != nil {
+			if err := Execute([]string{"--json", "--account", "a@b.com", "contacts", "directory", "list", "--max", "1"}); err != nil {
 				t.Fatalf("dir list: %v", err)
 			}
 		})
 		_ = captureStdout(t, func() {
-			if err := Execute([]string{"--output", "json", "--account", "a@b.com", "contacts", "directory", "search", "Dir", "--max", "1"}); err != nil {
+			if err := Execute([]string{"--json", "--account", "a@b.com", "contacts", "directory", "search", "Dir", "--max", "1"}); err != nil {
 				t.Fatalf("dir search: %v", err)
 			}
 		})
 		_ = captureStdout(t, func() {
-			if err := Execute([]string{"--output", "json", "--account", "a@b.com", "contacts", "other", "list", "--max", "1"}); err != nil {
+			if err := Execute([]string{"--json", "--account", "a@b.com", "contacts", "other", "list", "--max", "1"}); err != nil {
 				t.Fatalf("other list: %v", err)
 			}
 		})
 		_ = captureStdout(t, func() {
-			if err := Execute([]string{"--output", "json", "--account", "a@b.com", "contacts", "other", "search", "Other"}); err != nil {
+			if err := Execute([]string{"--json", "--account", "a@b.com", "contacts", "other", "search", "Other"}); err != nil {
 				t.Fatalf("other search: %v", err)
 			}
 		})

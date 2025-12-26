@@ -75,7 +75,7 @@ func TestExecute_GmailSearch_JSON(t *testing.T) {
 
 	out := captureStdout(t, func() {
 		_ = captureStderr(t, func() {
-			if err := Execute([]string{"--output", "json", "--account", "a@b.com", "gmail", "search", "newer_than:7d", "--max", "1"}); err != nil {
+			if err := Execute([]string{"--json", "--account", "a@b.com", "gmail", "search", "newer_than:7d", "--max", "1"}); err != nil {
 				t.Fatalf("Execute: %v", err)
 			}
 		})
@@ -111,7 +111,7 @@ func TestExecute_GmailSearch_JSON(t *testing.T) {
 func TestExecute_GmailURL_JSON(t *testing.T) {
 	out := captureStdout(t, func() {
 		_ = captureStderr(t, func() {
-			if err := Execute([]string{"--output", "json", "--account", "a@b.com", "gmail", "url", "t1"}); err != nil {
+			if err := Execute([]string{"--json", "--account", "a@b.com", "gmail", "url", "t1"}); err != nil {
 				t.Fatalf("Execute: %v", err)
 			}
 		})

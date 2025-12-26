@@ -109,47 +109,47 @@ func TestExecute_DriveMoreCommands_JSON(t *testing.T) {
 
 	_ = captureStderr(t, func() {
 		_ = captureStdout(t, func() {
-			if err := Execute([]string{"--output", "json", "--account", "a@b.com", "drive", "search", "hello"}); err != nil {
+			if err := Execute([]string{"--json", "--account", "a@b.com", "drive", "search", "hello"}); err != nil {
 				t.Fatalf("search: %v", err)
 			}
 		})
 		_ = captureStdout(t, func() {
-			if err := Execute([]string{"--output", "json", "--account", "a@b.com", "drive", "upload", tmpFile, "--name", "upload.bin", "--folder", "np"}); err != nil {
+			if err := Execute([]string{"--json", "--account", "a@b.com", "drive", "upload", tmpFile, "--name", "upload.bin", "--folder", "np"}); err != nil {
 				t.Fatalf("upload: %v", err)
 			}
 		})
 		_ = captureStdout(t, func() {
-			if err := Execute([]string{"--output", "json", "--account", "a@b.com", "drive", "mkdir", "Folder", "--parent", "np"}); err != nil {
+			if err := Execute([]string{"--json", "--account", "a@b.com", "drive", "mkdir", "Folder", "--parent", "np"}); err != nil {
 				t.Fatalf("mkdir: %v", err)
 			}
 		})
 		_ = captureStdout(t, func() {
-			if err := Execute([]string{"--output", "json", "--account", "a@b.com", "drive", "rename", "id1", "New"}); err != nil {
+			if err := Execute([]string{"--json", "--account", "a@b.com", "drive", "rename", "id1", "New"}); err != nil {
 				t.Fatalf("rename: %v", err)
 			}
 		})
 		_ = captureStdout(t, func() {
-			if err := Execute([]string{"--output", "json", "--account", "a@b.com", "drive", "move", "id1", "np"}); err != nil {
+			if err := Execute([]string{"--json", "--account", "a@b.com", "drive", "move", "id1", "np"}); err != nil {
 				t.Fatalf("move: %v", err)
 			}
 		})
 		_ = captureStdout(t, func() {
-			if err := Execute([]string{"--output", "json", "--account", "a@b.com", "drive", "share", "id1", "--anyone", "--role", "reader"}); err != nil {
+			if err := Execute([]string{"--json", "--account", "a@b.com", "drive", "share", "id1", "--anyone", "--role", "reader"}); err != nil {
 				t.Fatalf("share: %v", err)
 			}
 		})
 		_ = captureStdout(t, func() {
-			if err := Execute([]string{"--output", "json", "--account", "a@b.com", "drive", "permissions", "id1"}); err != nil {
+			if err := Execute([]string{"--json", "--account", "a@b.com", "drive", "permissions", "id1"}); err != nil {
 				t.Fatalf("permissions: %v", err)
 			}
 		})
 		_ = captureStdout(t, func() {
-			if err := Execute([]string{"--output", "json", "--account", "a@b.com", "drive", "unshare", "id1", "p1"}); err != nil {
+			if err := Execute([]string{"--json", "--force", "--account", "a@b.com", "drive", "unshare", "id1", "p1"}); err != nil {
 				t.Fatalf("unshare: %v", err)
 			}
 		})
 		_ = captureStdout(t, func() {
-			if err := Execute([]string{"--output", "json", "--account", "a@b.com", "drive", "delete", "id1"}); err != nil {
+			if err := Execute([]string{"--json", "--force", "--account", "a@b.com", "drive", "delete", "id1"}); err != nil {
 				t.Fatalf("delete: %v", err)
 			}
 		})

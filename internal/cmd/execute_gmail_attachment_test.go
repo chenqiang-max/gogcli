@@ -75,7 +75,7 @@ func TestExecute_GmailAttachment_OutPath_JSON(t *testing.T) {
 		out := captureStdout(t, func() {
 			_ = captureStderr(t, func() {
 				if execErr := Execute([]string{
-					"--output", "json",
+					"--json",
 					"--account", "a@b.com",
 					"gmail", "attachment", "m1", "a1",
 					"--out", outPath,
@@ -173,7 +173,7 @@ func TestExecute_GmailAttachment_NameOverride_ConfigDir_JSON(t *testing.T) {
 	out := captureStdout(t, func() {
 		_ = captureStderr(t, func() {
 			if execErr := Execute([]string{
-				"--output", "json",
+				"--json",
 				"--account", "a@b.com",
 				"gmail", "attachment", "m1", "a1",
 				"--name", "override.bin",
@@ -241,7 +241,7 @@ func TestExecute_GmailAttachment_NotFound(t *testing.T) {
 	outPath := filepath.Join(t.TempDir(), "a.bin")
 
 	err = Execute([]string{
-		"--output", "json",
+		"--json",
 		"--account", "a@b.com",
 		"gmail", "attachment", "m1", "a1",
 		"--out", outPath,

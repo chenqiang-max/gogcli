@@ -1,8 +1,8 @@
 package cmd
 
 import (
-	"errors"
 	"fmt"
+	"io"
 	"os"
 	"strings"
 	"text/tabwriter"
@@ -69,12 +69,19 @@ func newCalendarCalendarsCmd(flags *rootFlags) *cobra.Command {
 				return nil
 			}
 
-			tw := tabwriter.NewWriter(os.Stdout, 0, 4, 2, ' ', 0)
-			fmt.Fprintln(tw, "ID\tNAME\tROLE")
-			for _, c := range resp.Items {
-				fmt.Fprintf(tw, "%s\t%s\t%s\n", c.Id, c.Summary, c.AccessRole)
+			var w io.Writer = os.Stdout
+			var tw *tabwriter.Writer
+			if !outfmt.IsPlain(cmd.Context()) {
+				tw = tabwriter.NewWriter(os.Stdout, 0, 4, 2, ' ', 0)
+				w = tw
 			}
-			_ = tw.Flush()
+			fmt.Fprintln(w, "ID\tNAME\tROLE")
+			for _, c := range resp.Items {
+				fmt.Fprintf(w, "%s\t%s\t%s\n", c.Id, c.Summary, c.AccessRole)
+			}
+			if tw != nil {
+				_ = tw.Flush()
+			}
 			if resp.NextPageToken != "" {
 				u.Err().Printf("# Next page: --page %s", resp.NextPageToken)
 			}
@@ -123,8 +130,13 @@ func newCalendarAclCmd(flags *rootFlags) *cobra.Command {
 				return nil
 			}
 
-			tw := tabwriter.NewWriter(os.Stdout, 0, 4, 2, ' ', 0)
-			fmt.Fprintln(tw, "SCOPE_TYPE\tSCOPE_VALUE\tROLE")
+			var w io.Writer = os.Stdout
+			var tw *tabwriter.Writer
+			if !outfmt.IsPlain(cmd.Context()) {
+				tw = tabwriter.NewWriter(os.Stdout, 0, 4, 2, ' ', 0)
+				w = tw
+			}
+			fmt.Fprintln(w, "SCOPE_TYPE\tSCOPE_VALUE\tROLE")
 			for _, rule := range resp.Items {
 				scopeType := ""
 				scopeValue := ""
@@ -132,9 +144,11 @@ func newCalendarAclCmd(flags *rootFlags) *cobra.Command {
 					scopeType = rule.Scope.Type
 					scopeValue = rule.Scope.Value
 				}
-				fmt.Fprintf(tw, "%s\t%s\t%s\n", scopeType, scopeValue, rule.Role)
+				fmt.Fprintf(w, "%s\t%s\t%s\n", scopeType, scopeValue, rule.Role)
 			}
-			_ = tw.Flush()
+			if tw != nil {
+				_ = tw.Flush()
+			}
 			if resp.NextPageToken != "" {
 				u.Err().Printf("# Next page: --page %s", resp.NextPageToken)
 			}
@@ -206,12 +220,19 @@ func newCalendarEventsCmd(flags *rootFlags) *cobra.Command {
 				return nil
 			}
 
-			tw := tabwriter.NewWriter(os.Stdout, 0, 4, 2, ' ', 0)
-			fmt.Fprintln(tw, "ID\tSTART\tEND\tSUMMARY")
-			for _, e := range resp.Items {
-				fmt.Fprintf(tw, "%s\t%s\t%s\t%s\n", e.Id, eventStart(e), eventEnd(e), e.Summary)
+			var w io.Writer = os.Stdout
+			var tw *tabwriter.Writer
+			if !outfmt.IsPlain(cmd.Context()) {
+				tw = tabwriter.NewWriter(os.Stdout, 0, 4, 2, ' ', 0)
+				w = tw
 			}
-			_ = tw.Flush()
+			fmt.Fprintln(w, "ID\tSTART\tEND\tSUMMARY")
+			for _, e := range resp.Items {
+				fmt.Fprintf(w, "%s\t%s\t%s\t%s\n", e.Id, eventStart(e), eventEnd(e), e.Summary)
+			}
+			if tw != nil {
+				_ = tw.Flush()
+			}
 
 			if resp.NextPageToken != "" {
 				u.Err().Printf("# Next page: --page %s", resp.NextPageToken)
@@ -241,6 +262,10 @@ func newCalendarEventCmd(flags *rootFlags) *cobra.Command {
 			}
 			calendarID := args[0]
 			eventID := args[1]
+
+			if err := confirmDestructive(cmd, flags, fmt.Sprintf("delete calendar event %s/%s", calendarID, eventID)); err != nil {
+				return err
+			}
 
 			svc, err := newCalendarService(cmd.Context(), account)
 			if err != nil {
@@ -309,7 +334,7 @@ func newCalendarCreateCmd(flags *rootFlags) *cobra.Command {
 			calendarID := args[0]
 
 			if strings.TrimSpace(summary) == "" || strings.TrimSpace(from) == "" || strings.TrimSpace(to) == "" {
-				return errors.New("required: --summary, --from, --to")
+				return usage("required: --summary, --from, --to")
 			}
 
 			svc, err := newCalendarService(cmd.Context(), account)
@@ -388,7 +413,7 @@ func newCalendarUpdateCmd(flags *rootFlags) *cobra.Command {
 				targetAllDay = allDay
 				// Converting between all-day and timed needs explicit start/end.
 				if !cmd.Flags().Changed("from") || !cmd.Flags().Changed("to") {
-					return errors.New("when changing --all-day, also provide --from and --to")
+					return usage("when changing --all-day, also provide --from and --to")
 				}
 			}
 
@@ -422,7 +447,7 @@ func newCalendarUpdateCmd(flags *rootFlags) *cobra.Command {
 			}
 
 			if !changed {
-				return errors.New("no updates provided")
+				return usage("no updates provided")
 			}
 
 			updated, err := svc.Events.Update(calendarID, eventID, existing).Do()
@@ -503,10 +528,10 @@ func newCalendarFreeBusyCmd(flags *rootFlags) *cobra.Command {
 			}
 			calendarIDs := splitCSV(args[0])
 			if len(calendarIDs) == 0 {
-				return errors.New("no calendar IDs provided")
+				return usage("no calendar IDs provided")
 			}
 			if strings.TrimSpace(from) == "" || strings.TrimSpace(to) == "" {
-				return errors.New("required: --from and --to")
+				return usage("required: --from and --to")
 			}
 
 			svc, err := newCalendarService(cmd.Context(), account)
@@ -535,14 +560,21 @@ func newCalendarFreeBusyCmd(flags *rootFlags) *cobra.Command {
 				return nil
 			}
 
-			tw := tabwriter.NewWriter(os.Stdout, 0, 4, 2, ' ', 0)
-			fmt.Fprintln(tw, "CALENDAR\tSTART\tEND")
+			var w io.Writer = os.Stdout
+			var tw *tabwriter.Writer
+			if !outfmt.IsPlain(cmd.Context()) {
+				tw = tabwriter.NewWriter(os.Stdout, 0, 4, 2, ' ', 0)
+				w = tw
+			}
+			fmt.Fprintln(w, "CALENDAR\tSTART\tEND")
 			for id, data := range resp.Calendars {
 				for _, b := range data.Busy {
-					fmt.Fprintf(tw, "%s\t%s\t%s\n", id, b.Start, b.End)
+					fmt.Fprintf(w, "%s\t%s\t%s\n", id, b.Start, b.End)
 				}
 			}
-			_ = tw.Flush()
+			if tw != nil {
+				_ = tw.Flush()
+			}
 			return nil
 		},
 	}

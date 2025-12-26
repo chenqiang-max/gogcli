@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"encoding/base64"
-	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -28,7 +27,7 @@ func newGmailGetCmd(flags *rootFlags) *cobra.Command {
 			}
 			messageID := strings.TrimSpace(args[0])
 			if messageID == "" {
-				return errors.New("empty messageId")
+				return usage("empty messageId")
 			}
 
 			format = strings.TrimSpace(format)

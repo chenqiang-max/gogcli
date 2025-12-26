@@ -3,26 +3,31 @@ package outfmt
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"io"
+	"os"
 	"strings"
 )
 
-type Mode string
+type Mode struct {
+	JSON  bool
+	Plain bool
+}
 
-const (
-	ModeText Mode = "text"
-	ModeJSON Mode = "json"
-)
+type ParseError struct{ msg string }
 
-func Parse(s string) (Mode, error) {
-	switch Mode(strings.ToLower(strings.TrimSpace(s))) {
-	case ModeText, "":
-		return ModeText, nil
-	case ModeJSON:
-		return ModeJSON, nil
-	default:
-		return "", errors.New("invalid --output (expected text|json)")
+func (e *ParseError) Error() string { return e.msg }
+
+func FromFlags(jsonOut bool, plainOut bool) (Mode, error) {
+	if jsonOut && plainOut {
+		return Mode{}, &ParseError{msg: "invalid output mode (cannot combine --json and --plain)"}
+	}
+	return Mode{JSON: jsonOut, Plain: plainOut}, nil
+}
+
+func FromEnv() Mode {
+	return Mode{
+		JSON:  envBool("GOG_JSON"),
+		Plain: envBool("GOG_PLAIN"),
 	}
 }
 
@@ -38,16 +43,25 @@ func FromContext(ctx context.Context) Mode {
 			return m
 		}
 	}
-	return ModeText
+	return Mode{}
 }
 
-func IsJSON(ctx context.Context) bool {
-	return FromContext(ctx) == ModeJSON
-}
+func IsJSON(ctx context.Context) bool  { return FromContext(ctx).JSON }
+func IsPlain(ctx context.Context) bool { return FromContext(ctx).Plain }
 
 func WriteJSON(w io.Writer, v any) error {
 	enc := json.NewEncoder(w)
 	enc.SetEscapeHTML(false)
 	enc.SetIndent("", "  ")
 	return enc.Encode(v)
+}
+
+func envBool(key string) bool {
+	v := strings.TrimSpace(strings.ToLower(os.Getenv(key)))
+	switch v {
+	case "1", "true", "yes", "y", "on":
+		return true
+	default:
+		return false
+	}
 }

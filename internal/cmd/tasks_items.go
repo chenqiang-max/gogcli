@@ -1,8 +1,8 @@
 package cmd
 
 import (
-	"errors"
 	"fmt"
+	"io"
 	"os"
 	"strings"
 	"text/tabwriter"
@@ -38,7 +38,7 @@ func newTasksListCmd(flags *rootFlags) *cobra.Command {
 			}
 			tasklistID := strings.TrimSpace(args[0])
 			if tasklistID == "" {
-				return errors.New("empty tasklistId")
+				return usage("empty tasklistId")
 			}
 
 			svc, err := newTasksService(cmd.Context(), account)
@@ -86,16 +86,23 @@ func newTasksListCmd(flags *rootFlags) *cobra.Command {
 				return nil
 			}
 
-			tw := tabwriter.NewWriter(os.Stdout, 0, 4, 2, ' ', 0)
-			fmt.Fprintln(tw, "ID\tTITLE\tSTATUS\tDUE\tUPDATED")
+			var w io.Writer = os.Stdout
+			var tw *tabwriter.Writer
+			if !outfmt.IsPlain(cmd.Context()) {
+				tw = tabwriter.NewWriter(os.Stdout, 0, 4, 2, ' ', 0)
+				w = tw
+			}
+			fmt.Fprintln(w, "ID\tTITLE\tSTATUS\tDUE\tUPDATED")
 			for _, t := range resp.Items {
 				status := strings.TrimSpace(t.Status)
 				if status == "" {
 					status = "needsAction"
 				}
-				fmt.Fprintf(tw, "%s\t%s\t%s\t%s\t%s\n", t.Id, t.Title, status, strings.TrimSpace(t.Due), strings.TrimSpace(t.Updated))
+				fmt.Fprintf(w, "%s\t%s\t%s\t%s\t%s\n", t.Id, t.Title, status, strings.TrimSpace(t.Due), strings.TrimSpace(t.Updated))
 			}
-			_ = tw.Flush()
+			if tw != nil {
+				_ = tw.Flush()
+			}
 
 			if resp.NextPageToken != "" {
 				u.Err().Printf("# Next page: --page %s", resp.NextPageToken)
@@ -140,10 +147,10 @@ func newTasksAddCmd(flags *rootFlags) *cobra.Command {
 			}
 			tasklistID := strings.TrimSpace(args[0])
 			if tasklistID == "" {
-				return errors.New("empty tasklistId")
+				return usage("empty tasklistId")
 			}
 			if strings.TrimSpace(title) == "" {
-				return errors.New("required: --title")
+				return usage("required: --title")
 			}
 
 			svc, err := newTasksService(cmd.Context(), account)
@@ -213,10 +220,10 @@ func newTasksUpdateCmd(flags *rootFlags) *cobra.Command {
 			tasklistID := strings.TrimSpace(args[0])
 			taskID := strings.TrimSpace(args[1])
 			if tasklistID == "" {
-				return errors.New("empty tasklistId")
+				return usage("empty tasklistId")
 			}
 			if taskID == "" {
-				return errors.New("empty taskId")
+				return usage("empty taskId")
 			}
 
 			patch := &tasks.Task{}
@@ -238,11 +245,11 @@ func newTasksUpdateCmd(flags *rootFlags) *cobra.Command {
 				changed = true
 			}
 			if !changed {
-				return errors.New("no fields to update (set at least one of: --title, --notes, --due, --status)")
+				return usage("no fields to update (set at least one of: --title, --notes, --due, --status)")
 			}
 
 			if cmd.Flags().Changed("status") && patch.Status != "" && patch.Status != "needsAction" && patch.Status != "completed" {
-				return errors.New("invalid --status (expected needsAction or completed)")
+				return usage("invalid --status (expected needsAction or completed)")
 			}
 
 			svc, err := newTasksService(cmd.Context(), account)
@@ -295,10 +302,14 @@ func newTasksDoneCmd(flags *rootFlags) *cobra.Command {
 			tasklistID := strings.TrimSpace(args[0])
 			taskID := strings.TrimSpace(args[1])
 			if tasklistID == "" {
-				return errors.New("empty tasklistId")
+				return usage("empty tasklistId")
 			}
 			if taskID == "" {
-				return errors.New("empty taskId")
+				return usage("empty taskId")
+			}
+
+			if err := confirmDestructive(cmd, flags, fmt.Sprintf("delete task %s from list %s", taskID, tasklistID)); err != nil {
+				return err
 			}
 
 			svc, err := newTasksService(cmd.Context(), account)
@@ -336,10 +347,10 @@ func newTasksUndoCmd(flags *rootFlags) *cobra.Command {
 			tasklistID := strings.TrimSpace(args[0])
 			taskID := strings.TrimSpace(args[1])
 			if tasklistID == "" {
-				return errors.New("empty tasklistId")
+				return usage("empty tasklistId")
 			}
 			if taskID == "" {
-				return errors.New("empty taskId")
+				return usage("empty taskId")
 			}
 
 			svc, err := newTasksService(cmd.Context(), account)
@@ -377,10 +388,10 @@ func newTasksDeleteCmd(flags *rootFlags) *cobra.Command {
 			tasklistID := strings.TrimSpace(args[0])
 			taskID := strings.TrimSpace(args[1])
 			if tasklistID == "" {
-				return errors.New("empty tasklistId")
+				return usage("empty tasklistId")
 			}
 			if taskID == "" {
-				return errors.New("empty taskId")
+				return usage("empty taskId")
 			}
 
 			svc, err := newTasksService(cmd.Context(), account)
@@ -418,7 +429,11 @@ func newTasksClearCmd(flags *rootFlags) *cobra.Command {
 			}
 			tasklistID := strings.TrimSpace(args[0])
 			if tasklistID == "" {
-				return errors.New("empty tasklistId")
+				return usage("empty tasklistId")
+			}
+
+			if err := confirmDestructive(cmd, flags, fmt.Sprintf("clear completed tasks from list %s", tasklistID)); err != nil {
+				return err
 			}
 
 			svc, err := newTasksService(cmd.Context(), account)

@@ -78,7 +78,7 @@ func TestGmailLabelsGetCmd_JSON(t *testing.T) {
 			t.Fatalf("ui.New: %v", uiErr)
 		}
 		ctx := ui.WithUI(context.Background(), u)
-		ctx = outfmt.WithMode(ctx, outfmt.ModeJSON)
+		ctx = outfmt.WithMode(ctx, outfmt.Mode{JSON: true})
 
 		cmd := newGmailLabelsGetCmd(flags)
 		cmd.SetContext(ctx)
@@ -148,7 +148,7 @@ func TestGmailLabelsListCmd_TextAndJSON(t *testing.T) {
 			t.Fatalf("ui.New: %v", uiErr)
 		}
 		ctx := ui.WithUI(context.Background(), u)
-		ctx = outfmt.WithMode(ctx, outfmt.ModeText)
+		ctx = outfmt.WithMode(ctx, outfmt.Mode{})
 
 		cmd := newGmailLabelsListCmd(flags)
 		cmd.SetContext(ctx)
@@ -170,7 +170,7 @@ func TestGmailLabelsListCmd_TextAndJSON(t *testing.T) {
 			t.Fatalf("ui.New: %v", uiErr)
 		}
 		ctx := ui.WithUI(context.Background(), u)
-		ctx = outfmt.WithMode(ctx, outfmt.ModeJSON)
+		ctx = outfmt.WithMode(ctx, outfmt.Mode{JSON: true})
 
 		cmd := newGmailLabelsListCmd(flags)
 		cmd.SetContext(ctx)
@@ -261,7 +261,7 @@ func TestGmailLabelsModifyCmd_JSON(t *testing.T) {
 			t.Fatalf("ui.New: %v", uiErr)
 		}
 		ctx := ui.WithUI(context.Background(), u)
-		ctx = outfmt.WithMode(ctx, outfmt.ModeJSON)
+		ctx = outfmt.WithMode(ctx, outfmt.Mode{JSON: true})
 
 		cmd := newGmailLabelsModifyCmd(flags)
 		cmd.SetContext(ctx)
