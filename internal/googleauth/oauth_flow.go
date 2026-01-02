@@ -239,7 +239,7 @@ func Authorize(ctx context.Context, opts AuthorizeOptions) (string, error) {
 
 		shutdownCtx, cancel := context.WithTimeout(ctx, 2*time.Second)
 		defer cancel()
-		_ = srv.Shutdown(shutdownCtx) //nolint:contextcheck // intentionally using fresh context for graceful shutdown
+		_ = srv.Shutdown(shutdownCtx)
 
 		return tok.RefreshToken, nil
 	case err := <-errCh:
