@@ -377,6 +377,14 @@ func TestGmailWatchStopCmd_ServiceError(t *testing.T) {
 }
 
 func TestGmailWatchServeCmd_LoadStoreError(t *testing.T) {
+	origListen := listenAndServe
+	t.Cleanup(func() { listenAndServe = origListen })
+
+	// Guard against hangs if a watch state file exists in the runner's home.
+	listenAndServe = func(*http.Server) error { return errors.New("unexpected listen") }
+
+	t.Setenv("HOME", t.TempDir())
+
 	u, uiErr := ui.New(ui.Options{Stdout: io.Discard, Stderr: io.Discard, Color: "never"})
 	if uiErr != nil {
 		t.Fatalf("ui.New: %v", uiErr)
