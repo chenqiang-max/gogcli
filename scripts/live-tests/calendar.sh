@@ -28,6 +28,7 @@ PY
   [ -n "$ev_id" ] || { echo "Failed to parse calendar event id" >&2; exit 1; }
 
   run_required "calendar" "calendar event get" gog calendar event primary "$ev_id" --json >/dev/null
+  run_required "calendar" "calendar propose-time" gog calendar propose-time primary "$ev_id" --json >/dev/null
   run_required "calendar" "calendar update" gog calendar update primary "$ev_id" --summary "gogcli-smoke-updated-$TS" --json >/dev/null
   run_required "calendar" "calendar events list" gog calendar events primary --from "$START" --to "$END" --json --max 5 >/dev/null
   run_required "calendar" "calendar search" gog calendar search "gogcli-smoke" --from "$START" --to "$END" --json --max 5 >/dev/null
@@ -46,6 +47,17 @@ PY
     run_optional "calendar-enterprise" "calendar focus-time" gog calendar create primary --event-type focus-time --from "$START" --to "$END" --json >/dev/null 2>&1 || true
     run_optional "calendar-enterprise" "calendar out-of-office" gog calendar create primary --event-type out-of-office --from "$DAY1" --to "$DAY2" --all-day --json >/dev/null 2>&1 || true
     run_optional "calendar-enterprise" "calendar working-location" gog calendar create primary --event-type working-location --working-location-type office --working-office-label "HQ" --from "$DAY1" --to "$DAY2" --json >/dev/null 2>&1 || true
+  fi
+
+  if [ -n "${GOG_LIVE_CALENDAR_RECURRENCE:-}" ]; then
+    local rec_json rec_id
+    rec_json=$(gog calendar create primary --summary "gogcli-recurring-$TS" --from "$START" --to "$END" --rrule "RRULE:FREQ=DAILY;COUNT=2" --reminder "popup:30m" --json)
+    rec_id=$(extract_id "$rec_json")
+    if [ -n "$rec_id" ]; then
+      run_required "calendar" "calendar delete recurring" gog calendar delete primary "$rec_id" --force >/dev/null
+    fi
+  else
+    echo "==> calendar recurrence/reminders (skipped; set GOG_LIVE_CALENDAR_RECURRENCE=1)"
   fi
 
   if [ -n "${GOG_LIVE_GROUP_EMAIL:-}" ] && ! is_consumer_account "$ACCOUNT"; then

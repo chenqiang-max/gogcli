@@ -22,7 +22,9 @@ Options:
   -h, --help          Show this help
 
 Skip keys (base):
-  auth-alias, enable-commands, gmail, gmail-settings, gmail-delegates, gmail-batch-delete, drive, docs, sheets, slides,
+  time, version, completion, auth, auth-alias, config, enable-commands,
+  gmail, gmail-settings, gmail-delegates, gmail-batch-delete, gmail-history, gmail-url, gmail-labels,
+  gmail-attachments, gmail-track, gmail-watch, drive, docs, sheets, slides,
   calendar, calendar-enterprise, calendar-respond, calendar-team, calendar-users,
   tasks, contacts, people, groups, keep, classroom
 
@@ -36,6 +38,9 @@ Env:
   GOG_LIVE_ALLOW_NONTEST=1
   GOG_LIVE_CALENDAR_RESPOND=1
   GOG_LIVE_GMAIL_BATCH_DELETE=1
+  GOG_LIVE_GMAIL_FILTERS=1
+  GOG_LIVE_GMAIL_WATCH_TOPIC=projects/.../topics/...
+  GOG_LIVE_CALENDAR_RECURRENCE=1
   GOG_KEEP_SERVICE_ACCOUNT=/path/to/service-account.json
   GOG_KEEP_IMPERSONATE=user@workspace-domain
 USAGE

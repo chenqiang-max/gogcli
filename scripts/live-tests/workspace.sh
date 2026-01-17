@@ -31,6 +31,46 @@ run_workspace_tests() {
     return 0
   fi
 
-  run_optional "keep" "keep list" gog keep list --service-account "$GOG_KEEP_SERVICE_ACCOUNT" --impersonate "$GOG_KEEP_IMPERSONATE" --json --max 5 >/dev/null
+  local notes_json note_name note_json attachment_name attachment_out
+  echo "==> keep list (optional)"
+  if notes_json=$(gog keep list --service-account "$GOG_KEEP_SERVICE_ACCOUNT" --impersonate "$GOG_KEEP_IMPERSONATE" --json --max 5); then
+    echo "ok"
+  else
+    echo "skipped/failed"
+    if [ "${STRICT:-false}" = true ]; then
+      return 1
+    fi
+    return 0
+  fi
+
+  note_name=$(extract_keep_note_name "$notes_json")
+  if [ -n "$note_name" ]; then
+    echo "==> keep get (optional)"
+    if note_json=$(gog keep get "$note_name" --service-account "$GOG_KEEP_SERVICE_ACCOUNT" --impersonate "$GOG_KEEP_IMPERSONATE" --json); then
+      echo "ok"
+    else
+      echo "skipped/failed"
+      if [ "${STRICT:-false}" = true ]; then
+        return 1
+      fi
+      note_json=""
+    fi
+  else
+    echo "==> keep get (skipped; no notes)"
+    note_json=""
+  fi
+
   run_optional "keep" "keep search" gog keep search "gogcli" --service-account "$GOG_KEEP_SERVICE_ACCOUNT" --impersonate "$GOG_KEEP_IMPERSONATE" --json >/dev/null
+
+  if [ -n "$note_json" ]; then
+    attachment_name=$(extract_keep_attachment_name "$note_json")
+    if [ -n "$attachment_name" ]; then
+      attachment_out="$LIVE_TMP/keep-attachment-$TS"
+      run_optional "keep" "keep attachment" gog keep attachment "$attachment_name" --service-account "$GOG_KEEP_SERVICE_ACCOUNT" --impersonate "$GOG_KEEP_IMPERSONATE" --out "$attachment_out" >/dev/null
+    else
+      echo "==> keep attachment (skipped; no attachments)"
+    fi
+  else
+    echo "==> keep attachment (skipped; no note)"
+  fi
 }

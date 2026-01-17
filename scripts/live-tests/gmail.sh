@@ -2,6 +2,48 @@
 
 set -euo pipefail
 
+extract_history_id() {
+  $PY -c 'import json,sys
+obj=json.load(sys.stdin)
+def find(x):
+    if isinstance(x, dict):
+        v = x.get("historyId")
+        if isinstance(v, (str,int)):
+            return str(v)
+        for val in x.values():
+            r = find(val)
+            if r:
+                return r
+    if isinstance(x, list):
+        for val in x:
+            r = find(val)
+            if r:
+                return r
+    return ""
+print(find(obj))' <<<"$1"
+}
+
+extract_attachment_id() {
+  $PY -c 'import json,sys
+obj=json.load(sys.stdin)
+def find(x):
+    if isinstance(x, dict):
+        v = x.get("attachmentId")
+        if isinstance(v, str) and v:
+            return v
+        for val in x.values():
+            r = find(val)
+            if r:
+                return r
+    if isinstance(x, list):
+        for val in x:
+            r = find(val)
+            if r:
+                return r
+    return ""
+print(find(obj))' <<<"$1"
+}
+
 run_gmail_tests() {
   if skip "gmail"; then
     echo "==> gmail (skipped)"
@@ -24,6 +66,18 @@ run_gmail_tests() {
     run_required "gmail" "gmail settings autoforward get" gog gmail settings autoforward get --json >/dev/null
   fi
 
+  if [ -n "${GOG_LIVE_GMAIL_FILTERS:-}" ]; then
+    local filter_json filter_id
+    filter_json=$(gog gmail filters create --from "gogcli-smoke-$TS@example.com" --add-label INBOX --json)
+    filter_id=$(extract_id "$filter_json")
+    if [ -n "$filter_id" ]; then
+      run_required "gmail" "gmail filters get" gog gmail filters get "$filter_id" --json >/dev/null
+      run_required "gmail" "gmail filters delete" gog --force gmail filters delete "$filter_id" --json >/dev/null
+    fi
+  else
+    echo "==> gmail filters (skipped; set GOG_LIVE_GMAIL_FILTERS=1)"
+  fi
+
   local draft_json draft_id sent_draft_json sent_draft_msg_id
   draft_json=$(gog gmail drafts create --to "$EMAIL_TEST" --subject "gogcli smoke draft $TS" --body "smoke draft" --json)
   draft_id=$(extract_field "$draft_json" draftId)
@@ -42,16 +96,48 @@ run_gmail_tests() {
   send_thread_id=$(extract_field "$send_json" threadId)
   [ -n "$send_msg_id" ] || { echo "Failed to parse send message id" >&2; exit 1; }
 
-  run_required "gmail" "gmail get message" gog gmail get "$send_msg_id" --format metadata --json >/dev/null
+  local message_json history_id
+  echo "==> gmail get message"
+  message_json=$(gog gmail get "$send_msg_id" --json)
+  history_id=$(extract_history_id "$message_json")
+
+  if [ -n "$history_id" ]; then
+    run_optional "gmail-history" "gmail history" gog gmail history --since "$history_id" --json --max 5 >/dev/null
+  else
+    echo "==> gmail history (skipped; no historyId)"
+  fi
   if [ -n "$send_thread_id" ]; then
     run_required "gmail" "gmail thread get" gog gmail thread get "$send_thread_id" --json >/dev/null
     run_required "gmail" "gmail thread modify add label" gog gmail thread modify "$send_thread_id" --add STARRED --json >/dev/null
     run_required "gmail" "gmail thread modify remove label" gog gmail thread modify "$send_thread_id" --remove STARRED --json >/dev/null
+    run_required "gmail-url" "gmail url" gog gmail url "$send_thread_id" --json >/dev/null
   fi
 
   run_required "gmail" "gmail search" gog gmail search "subject:gogcli smoke send $TS" --json >/dev/null
   run_required "gmail" "gmail batch modify add" gog gmail batch modify "$send_msg_id" --add STARRED --json >/dev/null
   run_required "gmail" "gmail batch modify remove" gog gmail batch modify "$send_msg_id" --remove STARRED --json >/dev/null
+
+  if ! skip "gmail-labels"; then
+    local label_name label_ok
+    label_name="gogcli-smoke"
+    label_ok=false
+    if gog gmail labels create "$label_name" --json >/dev/null 2>&1; then
+      label_ok=true
+    elif gog gmail labels get "$label_name" --json >/dev/null 2>&1; then
+      label_ok=true
+    fi
+    if [ "$label_ok" = true ] && [ -n "$send_thread_id" ]; then
+      run_required "gmail-labels" "gmail labels modify add" gog gmail labels modify "$send_thread_id" --add "$label_name" --json >/dev/null
+      run_required "gmail-labels" "gmail labels modify remove" gog gmail labels modify "$send_thread_id" --remove "$label_name" --json >/dev/null
+    else
+      echo "==> gmail labels modify (skipped; label unavailable)"
+      if [ "${STRICT:-false}" = true ]; then
+        return 1
+      fi
+    fi
+  else
+    echo "==> gmail labels modify (skipped)"
+  fi
 
   if [ -z "${GOG_LIVE_GMAIL_BATCH_DELETE:-}" ] || skip "gmail-batch-delete"; then
     echo "==> gmail batch delete (skipped)"
@@ -68,7 +154,54 @@ run_gmail_tests() {
     fi
   fi
 
+  if skip "gmail-attachments"; then
+    echo "==> gmail attachment (skipped)"
+  else
+    local attach_path attach_json attach_msg_id attach_msg_json attach_id attach_out
+    attach_path="$LIVE_TMP/gmail-attach-$TS.txt"
+    printf "attachment %s\n" "$TS" >"$attach_path"
+    attach_json=$(gog gmail send --to "$EMAIL_TEST" --subject "gogcli smoke attach $TS" --body "attachment" --attach "$attach_path" --json)
+    attach_msg_id=$(extract_field "$attach_json" messageId)
+    if [ -n "$attach_msg_id" ]; then
+      echo "==> gmail get attachment message"
+      attach_msg_json=$(gog gmail get "$attach_msg_id" --json)
+      attach_id=$(extract_attachment_id "$attach_msg_json")
+      if [ -n "$attach_id" ]; then
+        attach_out="$LIVE_TMP/gmail-attachment-$TS"
+        run_required "gmail-attachments" "gmail attachment" gog gmail attachment "$attach_msg_id" "$attach_id" --out "$attach_out" >/dev/null
+      else
+        echo "No attachment id found" >&2
+        if [ "${STRICT:-false}" = true ]; then
+          return 1
+        fi
+      fi
+    else
+      echo "Failed to parse attachment message id" >&2
+      if [ "${STRICT:-false}" = true ]; then
+        return 1
+      fi
+    fi
+  fi
+
   if [ -n "${GOG_LIVE_TRACK:-}" ]; then
     run_optional "gmail-track" "gmail send --track" gog gmail send --to "$EMAIL_TEST" --subject "gogcli smoke track $TS" --body-html "<p>track $TS</p>" --track --json >/dev/null
+    run_optional "gmail-track" "gmail track status" gog gmail track status --json >/dev/null
+    run_optional "gmail-track" "gmail track opens" gog gmail track opens --json >/dev/null
+  fi
+
+  if [ -n "${GOG_LIVE_GMAIL_WATCH_TOPIC:-}" ]; then
+    local watch_json
+    if watch_json=$(gog gmail watch start --topic "$GOG_LIVE_GMAIL_WATCH_TOPIC" --json); then
+      run_optional "gmail-watch" "gmail watch status" gog gmail watch status --json >/dev/null
+      run_optional "gmail-watch" "gmail watch renew" gog gmail watch renew --json >/dev/null
+      run_optional "gmail-watch" "gmail watch stop" gog --force gmail watch stop --json >/dev/null
+    else
+      echo "gmail watch start failed" >&2
+      if [ "${STRICT:-false}" = true ]; then
+        return 1
+      fi
+    fi
+  else
+    echo "==> gmail watch (skipped; set GOG_LIVE_GMAIL_WATCH_TOPIC)"
   fi
 }

@@ -4,6 +4,8 @@ set -euo pipefail
 
 run_core_tests() {
   run_required "time" "time now" "$BIN" time now --json >/dev/null
+  run_required "version" "version" "$BIN" version --json >/dev/null
+  run_required "completion" "completion bash" "$BIN" completion bash >/dev/null
 
   if ! skip "auth-alias"; then
     local alias_name
@@ -12,6 +14,15 @@ run_core_tests() {
     run_required "auth-alias" "auth alias list" "$BIN" auth alias list --json >/dev/null
     run_required "auth-alias" "auth alias unset" "$BIN" auth alias unset "$alias_name" --json >/dev/null
   fi
+
+  run_required "auth" "auth list" "$BIN" auth list --json >/dev/null
+  run_required "auth" "auth services" "$BIN" auth services --json >/dev/null
+  run_required "auth" "auth status" "$BIN" auth status --json >/dev/null
+  run_required "auth" "auth tokens list" "$BIN" auth tokens list --json >/dev/null
+
+  run_required "config" "config keys" "$BIN" config keys --json >/dev/null
+  run_required "config" "config list" "$BIN" config list --json >/dev/null
+  run_required "config" "config path" "$BIN" config path --json >/dev/null
 
   if ! skip "enable-commands"; then
     run_required "enable-commands" "enable-commands allow time" "$BIN" --enable-commands time time now --json >/dev/null

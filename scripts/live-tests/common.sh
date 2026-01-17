@@ -160,6 +160,48 @@ for p in perms:
 print("")' "$email" <<<"$value"
 }
 
+extract_keep_note_name() {
+  $PY -c 'import json,sys,re
+obj=json.load(sys.stdin)
+def find(x):
+    if isinstance(x, dict):
+        name = x.get("name")
+        if isinstance(name, str) and name.startswith("notes/"):
+            return name
+        for v in x.values():
+            r = find(v)
+            if r:
+                return r
+    if isinstance(x, list):
+        for v in x:
+            r = find(v)
+            if r:
+                return r
+    return ""
+print(find(obj))' <<<"$1"
+}
+
+extract_keep_attachment_name() {
+  $PY -c 'import json,sys,re
+obj=json.load(sys.stdin)
+def find(x):
+    if isinstance(x, dict):
+        name = x.get("name")
+        if isinstance(name, str) and "/attachments/" in name:
+            return name
+        for v in x.values():
+            r = find(v)
+            if r:
+                return r
+    if isinstance(x, list):
+        for v in x:
+            r = find(v)
+            if r:
+                return r
+    return ""
+print(find(obj))' <<<"$1"
+}
+
 gog() {
   "$BIN" --account "$ACCOUNT" "$@"
 }
