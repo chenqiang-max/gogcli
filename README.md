@@ -478,17 +478,15 @@ gog gmail drafts send <draftId>
 gog gmail labels list
 gog gmail labels get INBOX --json  # Includes message counts
 gog gmail labels create "My Label"
-gog gmail labels update <labelId> --name "New Name"
-gog gmail labels delete <labelId>
+gog gmail labels modify <threadId> --add STARRED --remove INBOX
 
 # Batch operations
-gog gmail batch mark-read --query 'older_than:30d'
-gog gmail batch delete --query 'from:spam@example.com'
-gog gmail batch label --query 'from:boss@example.com' --add-labels IMPORTANT
+gog gmail batch delete <messageId> <messageId>
+gog gmail batch modify <messageId> <messageId> --add STARRED --remove INBOX
 
 # Filters
 gog gmail filters list
-gog gmail filters create --from 'noreply@example.com' --label 'Notifications'
+gog gmail filters create --from 'noreply@example.com' --add-label 'Notifications'
 gog gmail filters delete <filterId>
 
 # Settings
@@ -1076,13 +1074,19 @@ gog slides export <presentationId> --format pptx
 
 ```bash
 # Mark all emails from a sender as read
-gog gmail batch mark-read --query 'from:noreply@example.com'
+gog --json gmail search 'from:noreply@example.com' --max 200 | \
+  jq -r '.threads[].id' | \
+  xargs -n 50 gog gmail labels modify --remove UNREAD
 
 # Archive old emails
-gog gmail batch archive --query 'older_than:1y'
+gog --json gmail search 'older_than:1y' --max 200 | \
+  jq -r '.threads[].id' | \
+  xargs -n 50 gog gmail labels modify --remove INBOX
 
 # Label important emails
-gog gmail batch label --query 'from:boss@example.com' --add-labels IMPORTANT
+gog --json gmail search 'from:boss@example.com' --max 200 | \
+  jq -r '.threads[].id' | \
+  xargs -n 50 gog gmail labels modify --add IMPORTANT
 ```
 
 ## Advanced Features
