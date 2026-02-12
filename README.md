@@ -790,6 +790,7 @@ gog drive copy <fileId> "Copy Name"
 
 # Upload and download
 gog drive upload ./path/to/file --parent <folderId>
+gog drive upload ./path/to/file --replace <fileId>  # Replace file content in-place (preserves shared link)
 gog drive upload ./report.docx --convert
 gog drive upload ./chart.png --convert-to sheet
 gog drive upload ./report.docx --convert --name report.docx
