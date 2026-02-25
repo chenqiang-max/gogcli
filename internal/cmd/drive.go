@@ -21,6 +21,7 @@ import (
 )
 
 var newDriveService = googleapi.NewDrive
+var readExternalTokenConfig = config.ReadExternalTokenConfig
 
 var (
 	driveSearchFieldComparisonPattern = regexp.MustCompile(`(?i)\b(?:mimeType|name|fullText|trashed|starred|modifiedTime|createdTime|viewedByMeTime|visibility)\b\s*(?:!=|<=|>=|=|<|>)`)
@@ -89,7 +90,7 @@ type DriveLsCmd struct {
 
 func (c *DriveLsCmd) Run(ctx context.Context, flags *RootFlags) error {
 	u := ui.FromContext(ctx)
-	account, err := requireAccount(flags)
+	account, err := getAccountForDrive(flags)
 	if err != nil {
 		return err
 	}
@@ -161,7 +162,7 @@ type DriveSearchCmd struct {
 
 func (c *DriveSearchCmd) Run(ctx context.Context, flags *RootFlags) error {
 	u := ui.FromContext(ctx)
-	account, err := requireAccount(flags)
+	account, err := getAccountForDrive(flags)
 	if err != nil {
 		return err
 	}
@@ -226,7 +227,7 @@ type DriveGetCmd struct {
 
 func (c *DriveGetCmd) Run(ctx context.Context, flags *RootFlags) error {
 	u := ui.FromContext(ctx)
-	account, err := requireAccount(flags)
+	account, err := getAccountForDrive(flags)
 	if err != nil {
 		return err
 	}
@@ -277,7 +278,7 @@ type DriveDownloadCmd struct {
 
 func (c *DriveDownloadCmd) Run(ctx context.Context, flags *RootFlags) error {
 	u := ui.FromContext(ctx)
-	account, err := requireAccount(flags)
+	account, err := getAccountForDrive(flags)
 	if err != nil {
 		return err
 	}
@@ -357,7 +358,7 @@ type DriveUploadCmd struct {
 
 func (c *DriveUploadCmd) Run(ctx context.Context, flags *RootFlags) error {
 	u := ui.FromContext(ctx)
-	account, err := requireAccount(flags)
+	account, err := getAccountForDrive(flags)
 	if err != nil {
 		return err
 	}
@@ -508,7 +509,7 @@ type DriveMkdirCmd struct {
 
 func (c *DriveMkdirCmd) Run(ctx context.Context, flags *RootFlags) error {
 	u := ui.FromContext(ctx)
-	account, err := requireAccount(flags)
+	account, err := getAccountForDrive(flags)
 	if err != nil {
 		return err
 	}
@@ -559,7 +560,7 @@ type DriveDeleteCmd struct {
 
 func (c *DriveDeleteCmd) Run(ctx context.Context, flags *RootFlags) error {
 	u := ui.FromContext(ctx)
-	account, err := requireAccount(flags)
+	account, err := getAccountForDrive(flags)
 	if err != nil {
 		return err
 	}
@@ -612,7 +613,7 @@ type DriveMoveCmd struct {
 
 func (c *DriveMoveCmd) Run(ctx context.Context, flags *RootFlags) error {
 	u := ui.FromContext(ctx)
-	account, err := requireAccount(flags)
+	account, err := getAccountForDrive(flags)
 	if err != nil {
 		return err
 	}
@@ -668,7 +669,7 @@ type DriveRenameCmd struct {
 
 func (c *DriveRenameCmd) Run(ctx context.Context, flags *RootFlags) error {
 	u := ui.FromContext(ctx)
-	account, err := requireAccount(flags)
+	account, err := getAccountForDrive(flags)
 	if err != nil {
 		return err
 	}
@@ -716,7 +717,7 @@ type DriveShareCmd struct {
 
 func (c *DriveShareCmd) Run(ctx context.Context, flags *RootFlags) error {
 	u := ui.FromContext(ctx)
-	account, err := requireAccount(flags)
+	account, err := getAccountForDrive(flags)
 	if err != nil {
 		return err
 	}
@@ -834,7 +835,7 @@ type DriveUnshareCmd struct {
 
 func (c *DriveUnshareCmd) Run(ctx context.Context, flags *RootFlags) error {
 	u := ui.FromContext(ctx)
-	account, err := requireAccount(flags)
+	account, err := getAccountForDrive(flags)
 	if err != nil {
 		return err
 	}
@@ -875,7 +876,7 @@ type DrivePermissionsCmd struct {
 
 func (c *DrivePermissionsCmd) Run(ctx context.Context, flags *RootFlags) error {
 	u := ui.FromContext(ctx)
-	account, err := requireAccount(flags)
+	account, err := getAccountForDrive(flags)
 	if err != nil {
 		return err
 	}
@@ -940,7 +941,7 @@ type DriveURLCmd struct {
 
 func (c *DriveURLCmd) Run(ctx context.Context, flags *RootFlags) error {
 	u := ui.FromContext(ctx)
-	account, err := requireAccount(flags)
+	account, err := getAccountForDrive(flags)
 	if err != nil {
 		return err
 	}
@@ -1385,4 +1386,24 @@ func driveWebLink(ctx context.Context, svc *drive.Service, fileID string) (strin
 		return f.WebViewLink, nil
 	}
 	return fmt.Sprintf("https://drive.google.com/file/d/%s/view", fileID), nil
+}
+
+// getAccountForDrive returns the account to use for Drive operations.
+// Priority: --account flag > external config gdrive token > requireAccount (error)
+func getAccountForDrive(flags *RootFlags) (string, error) {
+	// First check if --account is specified
+	account := strings.TrimSpace(flags.Account)
+	if account != "" {
+		return account, nil
+	}
+
+	// Check if there's a gdrive token in external config
+	extConfig, err := readExternalTokenConfig()
+	if err == nil && extConfig != nil && extConfig.GetGDriveToken() != "" {
+		// Use a placeholder email since we only have token, not email
+		return "gdrive", nil
+	}
+
+	// Fall back to requireAccount
+	return requireAccount(flags)
 }

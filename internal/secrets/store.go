@@ -36,6 +36,7 @@ type Token struct {
 	Scopes       []string  `json:"scopes,omitempty"`
 	CreatedAt    time.Time `json:"created_at,omitempty"`
 	RefreshToken string    `json:"-"`
+	AccessToken  string    `json:"-"`
 }
 
 func keyringItem(key string, data []byte) keyring.Item {
@@ -302,7 +303,8 @@ func (s *KeyringStore) Keys() ([]string, error) {
 }
 
 type storedToken struct {
-	RefreshToken string    `json:"refresh_token"`
+	RefreshToken string    `json:"refresh_token,omitempty"`
+	AccessToken  string    `json:"access_token,omitempty"`
 	Services     []string  `json:"services,omitempty"`
 	Scopes       []string  `json:"scopes,omitempty"`
 	CreatedAt    time.Time `json:"created_at,omitempty"`
@@ -314,7 +316,8 @@ func (s *KeyringStore) SetToken(client string, email string, tok Token) error {
 		return errMissingEmail
 	}
 
-	if tok.RefreshToken == "" {
+	// Allow either access token (from third-party OAuth) or refresh token (from standard OAuth)
+	if tok.RefreshToken == "" && tok.AccessToken == "" {
 		return errMissingRefreshToken
 	}
 
@@ -329,6 +332,7 @@ func (s *KeyringStore) SetToken(client string, email string, tok Token) error {
 
 	payload, err := json.Marshal(storedToken{
 		RefreshToken: tok.RefreshToken,
+		AccessToken:  tok.AccessToken,
 		Services:     tok.Services,
 		Scopes:       tok.Scopes,
 		CreatedAt:    tok.CreatedAt,
@@ -389,6 +393,7 @@ func (s *KeyringStore) GetToken(client string, email string) (Token, error) {
 		Scopes:       st.Scopes,
 		CreatedAt:    st.CreatedAt,
 		RefreshToken: st.RefreshToken,
+		AccessToken:  st.AccessToken,
 	}, nil
 }
 

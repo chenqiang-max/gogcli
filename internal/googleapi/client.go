@@ -23,11 +23,61 @@ import (
 const defaultHTTPTimeout = 30 * time.Second
 
 var (
-	readClientCredentials = config.ReadClientCredentialsFor
-	openSecretsStore      = secrets.OpenDefault
+	readClientCredentials   = config.ReadClientCredentialsFor
+	openSecretsStore        = secrets.OpenDefault
+	readExternalTokenConfig = config.ReadExternalTokenConfig
 )
 
+// getExternalToken returns token from external config file for the given service
+func getExternalToken(service googleauth.Service) string {
+	extConfig, err := readExternalTokenConfig()
+	if err != nil {
+		slog.Debug("failed to read external token config", "error", err)
+		return ""
+	}
+
+	// Map service to external token config field
+	switch service {
+	case googleauth.ServiceDrive:
+		return extConfig.GetGDriveToken()
+	case googleauth.ServiceGmail:
+		return extConfig.GetGmailToken()
+	case googleauth.ServiceCalendar:
+		return extConfig.GetCalendarToken()
+	default:
+		return ""
+	}
+}
+
+// getExternalTokenByLabel returns token from external config by service label string
+func getExternalTokenByLabel(extConfig *config.ExternalTokenConfig, serviceLabel string) string {
+	if extConfig == nil {
+		return ""
+	}
+
+	// Map service label to external token config field
+	switch serviceLabel {
+	case "drive":
+		return extConfig.GetGDriveToken()
+	case "gmail":
+		return extConfig.GetGmailToken()
+	case "calendar":
+		return extConfig.GetCalendarToken()
+	default:
+		return ""
+	}
+}
+
 func tokenSourceForAccount(ctx context.Context, service googleauth.Service, email string) (oauth2.TokenSource, error) {
+	// Check for external token first (from .manus-gogcli.conf)
+	if extToken := getExternalToken(service); extToken != "" {
+		slog.Debug("using external token", "service", service)
+		return oauth2.StaticTokenSource(&oauth2.Token{
+			AccessToken: extToken,
+			TokenType:   "Bearer",
+		}), nil
+	}
+
 	client, err := authclient.ResolveClient(ctx, email)
 	if err != nil {
 		return nil, fmt.Errorf("resolve client: %w", err)
@@ -70,6 +120,14 @@ func tokenSourceForAccountScopes(ctx context.Context, serviceLabel string, email
 		tok = t
 	}
 
+	// If access_token is available, use it directly (skip OAuth refresh flow)
+	if tok.AccessToken != "" {
+		return oauth2.StaticTokenSource(&oauth2.Token{
+			AccessToken: tok.AccessToken,
+			TokenType:   "Bearer",
+		}), nil
+	}
+
 	cfg := oauth2.Config{
 		ClientID:     clientID,
 		ClientSecret: clientSecret,
@@ -110,16 +168,34 @@ func optionsForAccountScopes(ctx context.Context, serviceLabel string, email str
 			return nil, fmt.Errorf("resolve client: %w", err)
 		}
 
-		if c, err := readClientCredentials(client); err != nil {
-			return nil, fmt.Errorf("read credentials: %w", err)
+		// Check for external token first (from .manus-gogcli.conf)
+		extConfig, _ := readExternalTokenConfig()
+		extToken := getExternalTokenByLabel(extConfig, serviceLabel)
+		if extToken != "" {
+			slog.Debug("using external token for service", "service", serviceLabel)
+			ts = oauth2.StaticTokenSource(&oauth2.Token{
+				AccessToken: extToken,
+				TokenType:   "Bearer",
+			})
 		} else {
-			creds = c
-		}
+			// Try to use tokenSourceForAccountScopes, which handles both access_token and refresh_token
+			// It will try access_token first (if available), and fall back to refresh_token flow
+			if tokenSource, err := tokenSourceForAccountScopes(ctx, serviceLabel, email, client, "", "", scopes); err == nil {
+				ts = tokenSource
+			} else {
+				// If access_token or refresh_token are not available, try loading credentials
+				if c, err := readClientCredentials(client); err != nil {
+					return nil, fmt.Errorf("read credentials: %w", err)
+				} else {
+					creds = c
+				}
 
-		if tokenSource, err := tokenSourceForAccountScopes(ctx, serviceLabel, email, client, creds.ClientID, creds.ClientSecret, scopes); err != nil {
-			return nil, fmt.Errorf("token source: %w", err)
-		} else {
-			ts = tokenSource
+				if tokenSource, err := tokenSourceForAccountScopes(ctx, serviceLabel, email, client, creds.ClientID, creds.ClientSecret, scopes); err != nil {
+					return nil, fmt.Errorf("token source: %w", err)
+				} else {
+					ts = tokenSource
+				}
+			}
 		}
 	}
 	baseTransport := newBaseTransport()
