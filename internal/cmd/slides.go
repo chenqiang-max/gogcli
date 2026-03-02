@@ -23,7 +23,7 @@ type SlidesCmd struct {
 	Export             SlidesExportCmd             `cmd:"" name:"export" aliases:"download,dl" help:"Export a Google Slides deck (pdf|pptx)"`
 	Info               SlidesInfoCmd               `cmd:"" name:"info" aliases:"get,show" help:"Get Google Slides presentation metadata"`
 	Create             SlidesCreateCmd             `cmd:"" name:"create" aliases:"add,new" help:"Create a Google Slides presentation"`
-	CreateFromMarkdown SlidesCreateFromMarkdownCmd `cmd:"" name:"create-from-markdown" help:"Create a Google Slides presentation from markdown"`
+	CreateFromMarkdown SlidesCreateFromMarkdownCmd `cmd:"" name:"create-from-markdown" help:"Create a presentation from markdown (each slide starts with --- followed by ## Title)"`
 	Copy               SlidesCopyCmd               `cmd:"" name:"copy" aliases:"cp,duplicate" help:"Copy a Google Slides presentation"`
 	AddSlide           SlidesAddSlideCmd           `cmd:"" name:"add-slide" help:"Add a slide with a full-bleed image and optional speaker notes"`
 	ListSlides         SlidesListSlidesCmd         `cmd:"" name:"list-slides" help:"List all slides with their object IDs"`
