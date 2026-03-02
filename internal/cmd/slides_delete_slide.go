@@ -18,7 +18,7 @@ type SlidesDeleteSlideCmd struct {
 func (c *SlidesDeleteSlideCmd) Run(ctx context.Context, flags *RootFlags) error {
 	u := ui.FromContext(ctx)
 
-	account, err := requireAccount(flags)
+	account, err := getAccountForDrive(flags)
 	if err != nil {
 		return err
 	}

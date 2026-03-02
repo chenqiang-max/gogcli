@@ -77,7 +77,7 @@ type SheetsGetCmd struct {
 
 func (c *SheetsGetCmd) Run(ctx context.Context, flags *RootFlags) error {
 	u := ui.FromContext(ctx)
-	account, err := requireAccount(flags)
+	account, err := getAccountForDrive(flags)
 	if err != nil {
 		return err
 	}
@@ -197,7 +197,7 @@ func (c *SheetsUpdateCmd) Run(ctx context.Context, flags *RootFlags) error {
 		return err
 	}
 
-	account, err := requireAccount(flags)
+	account, err := getAccountForDrive(flags)
 	if err != nil {
 		return err
 	}
@@ -306,7 +306,7 @@ func (c *SheetsAppendCmd) Run(ctx context.Context, flags *RootFlags) error {
 		return err
 	}
 
-	account, err := requireAccount(flags)
+	account, err := getAccountForDrive(flags)
 	if err != nil {
 		return err
 	}
@@ -376,7 +376,7 @@ func (c *SheetsClearCmd) Run(ctx context.Context, flags *RootFlags) error {
 		return err
 	}
 
-	account, err := requireAccount(flags)
+	account, err := getAccountForDrive(flags)
 	if err != nil {
 		return err
 	}
@@ -407,7 +407,7 @@ type SheetsMetadataCmd struct {
 
 func (c *SheetsMetadataCmd) Run(ctx context.Context, flags *RootFlags) error {
 	u := ui.FromContext(ctx)
-	account, err := requireAccount(flags)
+	account, err := getAccountForDrive(flags)
 	if err != nil {
 		return err
 	}
@@ -480,7 +480,7 @@ func (c *SheetsCreateCmd) Run(ctx context.Context, flags *RootFlags) error {
 		return err
 	}
 
-	account, err := requireAccount(flags)
+	account, err := getAccountForDrive(flags)
 	if err != nil {
 		return err
 	}

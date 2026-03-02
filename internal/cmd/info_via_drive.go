@@ -21,7 +21,7 @@ const infoViaDriveDefaultKindLabel = "expected type"
 
 func infoViaDrive(ctx context.Context, flags *RootFlags, opts infoViaDriveOptions, id string) error {
 	u := ui.FromContext(ctx)
-	account, err := requireAccount(flags)
+	account, err := getAccountForDrive(flags)
 	if err != nil {
 		return err
 	}

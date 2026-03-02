@@ -12,12 +12,7 @@ const (
 
 // ExternalTokenConfig holds tokens from external configuration file (.manus-gogcli.conf)
 type ExternalTokenConfig struct {
-	GDriveEmail   string // email for Google Drive (optional)
-	GDriveToken   string // token for Google Drive
-	GmailEmail    string // email for Gmail (optional)
-	GmailToken    string // token for Gmail (future use)
-	CalendarEmail string // email for Google Calendar (optional)
-	CalendarToken string // token for Google Calendar (future use)
+	GDriveToken string // token for Google Drive
 }
 
 // ReadExternalTokenConfig reads tokens from ~/.manus-gogcli.conf
@@ -79,32 +74,11 @@ func parseExternalConfig(content string) (*ExternalTokenConfig, error) {
 			switch currentSection {
 			case "gdrive":
 				config.GDriveToken = value
-			case "gmail":
-				config.GmailToken = value
-			case "calendar":
-				config.CalendarToken = value
-			}
-		case "email":
-			switch currentSection {
-			case "gdrive":
-				config.GDriveEmail = value
-			case "gmail":
-				config.GmailEmail = value
-			case "calendar":
-				config.CalendarEmail = value
 			}
 		}
 	}
 
 	return config, nil
-}
-
-// GetGDriveEmail returns the Google Drive email from external config
-func (c *ExternalTokenConfig) GetGDriveEmail() string {
-	if c == nil {
-		return ""
-	}
-	return c.GDriveEmail
 }
 
 // GetGDriveToken returns the Google Drive token from external config
@@ -115,33 +89,7 @@ func (c *ExternalTokenConfig) GetGDriveToken() string {
 	return c.GDriveToken
 }
 
-// GetGmailToken returns the Gmail token from external config
-func (c *ExternalTokenConfig) GetGmailToken() string {
-	if c == nil {
-		return ""
-	}
-	return c.GmailToken
-}
-
-// GetCalendarToken returns the Calendar token from external config
-func (c *ExternalTokenConfig) GetCalendarToken() string {
-	if c == nil {
-		return ""
-	}
-	return c.CalendarToken
-}
-
 // HasGDriveToken returns true if GDrive token is available
 func (c *ExternalTokenConfig) HasGDriveToken() bool {
 	return c != nil && c.GDriveToken != ""
-}
-
-// HasGmailToken returns true if Gmail token is available
-func (c *ExternalTokenConfig) HasGmailToken() bool {
-	return c != nil && c.GmailToken != ""
-}
-
-// HasCalendarToken returns true if Calendar token is available
-func (c *ExternalTokenConfig) HasCalendarToken() bool {
-	return c != nil && c.CalendarToken != ""
 }

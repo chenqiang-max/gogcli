@@ -40,7 +40,7 @@ func (c *SlidesReplaceSlideCmd) Run(ctx context.Context, flags *RootFlags) error
 		updateNotes = true
 	}
 
-	account, err := requireAccount(flags)
+	account, err := getAccountForDrive(flags)
 	if err != nil {
 		return err
 	}

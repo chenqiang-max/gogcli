@@ -68,7 +68,7 @@ type SlidesCreateCmd struct {
 
 func (c *SlidesCreateCmd) Run(ctx context.Context, flags *RootFlags) error {
 	u := ui.FromContext(ctx)
-	account, err := requireAccount(flags)
+	account, err := getAccountForDrive(flags)
 	if err != nil {
 		return err
 	}
@@ -151,7 +151,7 @@ type SlidesCreateFromMarkdownCmd struct {
 
 func (c *SlidesCreateFromMarkdownCmd) Run(ctx context.Context, flags *RootFlags) error {
 	u := ui.FromContext(ctx)
-	account, err := requireAccount(flags)
+	account, err := getAccountForDrive(flags)
 	if err != nil {
 		return err
 	}

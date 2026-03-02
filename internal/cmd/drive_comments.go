@@ -33,7 +33,7 @@ type DriveCommentsListCmd struct {
 
 func (c *DriveCommentsListCmd) Run(ctx context.Context, flags *RootFlags) error {
 	u := ui.FromContext(ctx)
-	account, err := requireAccount(flags)
+	account, err := getAccountForDrive(flags)
 	if err != nil {
 		return err
 	}
@@ -158,7 +158,7 @@ type DriveCommentsGetCmd struct {
 
 func (c *DriveCommentsGetCmd) Run(ctx context.Context, flags *RootFlags) error {
 	u := ui.FromContext(ctx)
-	account, err := requireAccount(flags)
+	account, err := getAccountForDrive(flags)
 	if err != nil {
 		return err
 	}
@@ -231,7 +231,7 @@ func (c *DriveCommentsCreateCmd) Run(ctx context.Context, flags *RootFlags) erro
 		return err
 	}
 
-	account, err := requireAccount(flags)
+	account, err := getAccountForDrive(flags)
 	if err != nil {
 		return err
 	}
@@ -299,7 +299,7 @@ func (c *DriveCommentsUpdateCmd) Run(ctx context.Context, flags *RootFlags) erro
 		return err
 	}
 
-	account, err := requireAccount(flags)
+	account, err := getAccountForDrive(flags)
 	if err != nil {
 		return err
 	}
@@ -351,7 +351,7 @@ func (c *DriveCommentsDeleteCmd) Run(ctx context.Context, flags *RootFlags) erro
 		return confirmErr
 	}
 
-	account, err := requireAccount(flags)
+	account, err := getAccountForDrive(flags)
 	if err != nil {
 		return err
 	}
@@ -401,7 +401,7 @@ func (c *DriveCommentReplyCmd) Run(ctx context.Context, flags *RootFlags) error 
 		return err
 	}
 
-	account, err := requireAccount(flags)
+	account, err := getAccountForDrive(flags)
 	if err != nil {
 		return err
 	}

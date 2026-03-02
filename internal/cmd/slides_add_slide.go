@@ -38,7 +38,7 @@ func (c *SlidesAddSlideCmd) Run(ctx context.Context, flags *RootFlags) error {
 		notes = c.Notes
 	}
 
-	account, err := requireAccount(flags)
+	account, err := getAccountForDrive(flags)
 	if err != nil {
 		return err
 	}

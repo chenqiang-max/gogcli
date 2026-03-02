@@ -43,7 +43,7 @@ func copyViaDrive(ctx context.Context, flags *RootFlags, opts copyViaDriveOption
 		return err
 	}
 
-	account, err := requireAccount(flags)
+	account, err := getAccountForDrive(flags)
 	if err != nil {
 		return err
 	}

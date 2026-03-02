@@ -40,10 +40,12 @@ func getExternalToken(service googleauth.Service) string {
 	switch service {
 	case googleauth.ServiceDrive:
 		return extConfig.GetGDriveToken()
-	case googleauth.ServiceGmail:
-		return extConfig.GetGmailToken()
-	case googleauth.ServiceCalendar:
-		return extConfig.GetCalendarToken()
+	case googleauth.ServiceDocs:
+		return extConfig.GetGDriveToken()
+	case googleauth.ServiceSheets:
+		return extConfig.GetGDriveToken()
+	case googleauth.ServiceSlides:
+		return extConfig.GetGDriveToken()
 	default:
 		return ""
 	}
@@ -59,10 +61,12 @@ func getExternalTokenByLabel(extConfig *config.ExternalTokenConfig, serviceLabel
 	switch serviceLabel {
 	case "drive":
 		return extConfig.GetGDriveToken()
-	case "gmail":
-		return extConfig.GetGmailToken()
-	case "calendar":
-		return extConfig.GetCalendarToken()
+	case "docs":
+		return extConfig.GetGDriveToken()
+	case "sheets":
+		return extConfig.GetGDriveToken()
+	case "slides":
+		return extConfig.GetGDriveToken()
 	default:
 		return ""
 	}

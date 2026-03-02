@@ -56,7 +56,7 @@ type DocsInfoCmd struct {
 
 func (c *DocsInfoCmd) Run(ctx context.Context, flags *RootFlags) error {
 	u := ui.FromContext(ctx)
-	account, err := requireAccount(flags)
+	account, err := getAccountForDrive(flags)
 	if err != nil {
 		return err
 	}
@@ -121,7 +121,7 @@ type DocsCreateCmd struct {
 
 func (c *DocsCreateCmd) Run(ctx context.Context, flags *RootFlags) error {
 	u := ui.FromContext(ctx)
-	account, err := requireAccount(flags)
+	account, err := getAccountForDrive(flags)
 	if err != nil {
 		return err
 	}
@@ -274,7 +274,7 @@ type DocsCatCmd struct {
 }
 
 func (c *DocsCatCmd) Run(ctx context.Context, flags *RootFlags) error {
-	account, err := requireAccount(flags)
+	account, err := getAccountForDrive(flags)
 	if err != nil {
 		return err
 	}
@@ -333,7 +333,7 @@ const (
 
 func (c *DocsUpdateCmd) Run(ctx context.Context, flags *RootFlags) error {
 	u := ui.FromContext(ctx)
-	account, err := requireAccount(flags)
+	account, err := getAccountForDrive(flags)
 	if err != nil {
 		return err
 	}
@@ -562,7 +562,7 @@ type DocsListTabsCmd struct {
 
 func (c *DocsListTabsCmd) Run(ctx context.Context, flags *RootFlags) error {
 	u := ui.FromContext(ctx)
-	account, err := requireAccount(flags)
+	account, err := getAccountForDrive(flags)
 	if err != nil {
 		return err
 	}
@@ -625,7 +625,7 @@ type DocsWriteCmd struct {
 }
 
 func (c *DocsWriteCmd) Run(ctx context.Context, flags *RootFlags) error {
-	account, err := requireAccount(flags)
+	account, err := getAccountForDrive(flags)
 	if err != nil {
 		return err
 	}
@@ -772,7 +772,7 @@ type DocsInsertCmd struct {
 
 func (c *DocsInsertCmd) Run(ctx context.Context, flags *RootFlags) error {
 	u := ui.FromContext(ctx)
-	account, err := requireAccount(flags)
+	account, err := getAccountForDrive(flags)
 	if err != nil {
 		return err
 	}
@@ -835,7 +835,7 @@ type DocsDeleteCmd struct {
 
 func (c *DocsDeleteCmd) Run(ctx context.Context, flags *RootFlags) error {
 	u := ui.FromContext(ctx)
-	account, err := requireAccount(flags)
+	account, err := getAccountForDrive(flags)
 	if err != nil {
 		return err
 	}
@@ -895,7 +895,7 @@ type DocsFindReplaceCmd struct {
 
 func (c *DocsFindReplaceCmd) Run(ctx context.Context, flags *RootFlags) error {
 	u := ui.FromContext(ctx)
-	account, err := requireAccount(flags)
+	account, err := getAccountForDrive(flags)
 	if err != nil {
 		return err
 	}
