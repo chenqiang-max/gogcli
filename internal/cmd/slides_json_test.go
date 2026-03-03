@@ -640,6 +640,73 @@ func TestParseMarkdownText(t *testing.T) {
 	}
 }
 
+func TestNormalizeNewlines(t *testing.T) {
+	tests := []struct {
+		name    string
+		input   string
+		want    string
+		desc    string
+	}{
+		{
+			name:  "no newlines",
+			input: "Hello world",
+			want:  "Hello world",
+			desc:  "plain text unchanged",
+		},
+		{
+			name:  "single newline becomes soft break",
+			input: "line one\nline two",
+			want:  "line one\vline two",
+			desc:  "\\n → \\v (soft line break / Shift+Enter)",
+		},
+		{
+			name:  "double newline becomes paragraph break",
+			input: "para one\n\npara two",
+			want:  "para one\npara two",
+			desc:  "\\n\\n → \\n (paragraph break)",
+		},
+		{
+			name:  "mixed newlines",
+			input: "title\n\nbullet one\nbullet two\n\nend",
+			want:  "title\nbullet one\vbullet two\nend",
+			desc:  "mixed: \\n\\n → \\n, single \\n → \\v",
+		},
+		{
+			name:  "triple newline",
+			input: "a\n\n\nb",
+			want:  "a\n\vb",
+			desc:  "\\n\\n\\n → \\n (para break from first two) + \\v (soft break from third)",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, _ := normalizeNewlines(tt.input, nil)
+			if got != tt.want {
+				t.Errorf("normalizeNewlines(%q) =\n  got:  %q\n  want: %q\n  (%s)", tt.input, got, tt.want, tt.desc)
+			}
+		})
+	}
+}
+
+func TestNormalizeNewlines_AdjustsAnnotations(t *testing.T) {
+	// "ab\n\ncd" → "ab\ncd" — the annotation covering "cd" should shift
+	input := "ab\n\ncd"
+	annotations := []textAnnotation{
+		{start: 4, end: 6, style: "bold"}, // "cd" in original at positions 4-6
+	}
+	got, adjusted := normalizeNewlines(input, annotations)
+	if got != "ab\ncd" {
+		t.Fatalf("text = %q, want %q", got, "ab\ncd")
+	}
+	if len(adjusted) != 1 {
+		t.Fatalf("expected 1 annotation, got %d", len(adjusted))
+	}
+	if adjusted[0].start != 3 || adjusted[0].end != 5 {
+		t.Errorf("annotation = [%d,%d), want [3,5)", adjusted[0].start, adjusted[0].end)
+	}
+}
+
 func TestParsePlaceholderType(t *testing.T) {
 	tests := []struct {
 		key       string

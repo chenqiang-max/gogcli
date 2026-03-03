@@ -607,12 +607,79 @@ func parseMarkdownText(input string) (string, []textAnnotation) {
 	return plain.String(), annotations
 }
 
+// normalizeNewlines converts paragraph separators (\n\n) into Google Slides
+// paragraph breaks (\n) and single newlines (\n) into soft line breaks (\v,
+// equivalent to Shift+Enter in the UI).  Annotation offsets are adjusted to
+// account for the shorter output.
+func normalizeNewlines(text string, annotations []textAnnotation) (string, []textAnnotation) {
+	// Fast path: nothing to do if there are no newlines.
+	if !strings.Contains(text, "\n") {
+		return text, annotations
+	}
+
+	var out strings.Builder
+	out.Grow(len(text))
+
+	// offsetMap[i] = position in output that corresponds to position i in input
+	offsetMap := make([]int, len(text)+1)
+	inPos := 0
+	outPos := 0
+
+	for inPos < len(text) {
+		offsetMap[inPos] = outPos
+		if inPos+1 < len(text) && text[inPos] == '\n' && text[inPos+1] == '\n' {
+			// \n\n → single \n (paragraph break)
+			out.WriteByte('\n')
+			offsetMap[inPos+1] = outPos // second \n maps to same output position
+			inPos += 2
+			outPos++
+		} else if text[inPos] == '\n' {
+			// single \n → \v (soft line break)
+			out.WriteByte('\v')
+			inPos++
+			outPos++
+		} else {
+			out.WriteByte(text[inPos])
+			inPos++
+			outPos++
+		}
+	}
+	offsetMap[inPos] = outPos
+
+	// Adjust annotations
+	adjusted := make([]textAnnotation, len(annotations))
+	for i, a := range annotations {
+		adjusted[i] = textAnnotation{
+			start: offsetMap[clamp(a.start, 0, len(text))],
+			end:   offsetMap[clamp(a.end, 0, len(text))],
+			style: a.style,
+			url:   a.url,
+		}
+	}
+
+	return out.String(), adjusted
+}
+
+func clamp(v, lo, hi int) int {
+	if v < lo {
+		return lo
+	}
+	if v > hi {
+		return hi
+	}
+	return v
+}
+
 // buildInsertTextRequests builds InsertText + UpdateTextStyle requests for markdown text.
+// Newline handling: \n\n → paragraph break (\n), single \n → soft line break (\v / Shift+Enter).
 func buildInsertTextRequests(objectID, text string) []*slides.Request {
 	plainText, annotations := parseMarkdownText(text)
 	if plainText == "" {
 		return nil
 	}
+
+	// Normalize newlines: \n\n → \n (paragraph break), single \n → \v (soft break)
+	plainText, annotations = normalizeNewlines(plainText, annotations)
 
 	var reqs []*slides.Request
 
