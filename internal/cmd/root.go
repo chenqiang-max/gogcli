@@ -346,7 +346,7 @@ func helpDescription() string {
 		backendLine = fmt.Sprintf("%s (source: %s)", backendInfo.Value, backendInfo.Source)
 	}
 
-	return fmt.Sprintf("%s\n\nConfig:\n  file: %s\n  keyring backend: %s", desc, configLine, backendLine)
+	return fmt.Sprintf("%s\n\nConfig:\n  file: %s\n  external: %s\n  keyring backend: %s", desc, configLine, config.ExternalTokenConfigPath, backendLine)
 }
 
 // newUsageError wraps errors in a way main() can map to exit code 2.
