@@ -172,6 +172,7 @@ func TestParseAttendee(t *testing.T) {
 			}
 			if got == nil {
 				t.Fatalf("expected attendee, got nil")
+				return
 			}
 			if got.Email != tt.email || got.Optional != tt.optional || got.Comment != tt.comment {
 				t.Fatalf("unexpected attendee: %#v", got)

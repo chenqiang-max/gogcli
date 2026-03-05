@@ -132,7 +132,7 @@ func buildRFC822(opts mailOptions, cfg *rfc822Config) ([]byte, error) {
 
 			writeTextPart(&b, altBoundary, "text/plain; charset=\"utf-8\"", plainBody)
 			writeTextPart(&b, altBoundary, "text/html; charset=\"utf-8\"", htmlBody)
-			b.WriteString(fmt.Sprintf("--%s--\r\n", altBoundary))
+			fmt.Fprintf(&b, "--%s--\r\n", altBoundary)
 			return b.Bytes(), nil
 		case hasHTML && !hasPlain:
 			writeHeader(&b, "Content-Type", "text/html; charset=\"utf-8\"")
@@ -158,17 +158,17 @@ func buildRFC822(opts mailOptions, cfg *rfc822Config) ([]byte, error) {
 	b.WriteString("\r\n")
 
 	// Body part
-	b.WriteString(fmt.Sprintf("--%s\r\n", mixedBoundary))
+	fmt.Fprintf(&b, "--%s\r\n", mixedBoundary)
 	switch {
 	case hasPlain && hasHTML:
 		altBoundary, err := randomBoundary()
 		if err != nil {
 			return nil, err
 		}
-		b.WriteString(fmt.Sprintf("Content-Type: multipart/alternative; boundary=%q\r\n\r\n", altBoundary))
+		fmt.Fprintf(&b, "Content-Type: multipart/alternative; boundary=%q\r\n\r\n", altBoundary)
 		writeTextPart(&b, altBoundary, "text/plain; charset=\"utf-8\"", plainBody)
 		writeTextPart(&b, altBoundary, "text/html; charset=\"utf-8\"", htmlBody)
-		b.WriteString(fmt.Sprintf("--%s--\r\n", altBoundary))
+		fmt.Fprintf(&b, "--%s--\r\n", altBoundary)
 	case hasHTML && !hasPlain:
 		b.WriteString("Content-Type: text/html; charset=\"utf-8\"\r\n")
 		b.WriteString("Content-Transfer-Encoding: 7bit\r\n\r\n")
@@ -198,15 +198,15 @@ func buildRFC822(opts mailOptions, cfg *rfc822Config) ([]byte, error) {
 			a.Data = data
 		}
 
-		b.WriteString(fmt.Sprintf("\r\n--%s\r\n", mixedBoundary))
-		b.WriteString(fmt.Sprintf("Content-Type: %s\r\n", a.MIMEType))
+		fmt.Fprintf(&b, "\r\n--%s\r\n", mixedBoundary)
+		fmt.Fprintf(&b, "Content-Type: %s\r\n", a.MIMEType)
 		b.WriteString("Content-Transfer-Encoding: base64\r\n")
-		b.WriteString(fmt.Sprintf("Content-Disposition: attachment; %s\r\n\r\n", contentDispositionFilename(a.Filename)))
+		fmt.Fprintf(&b, "Content-Disposition: attachment; %s\r\n\r\n", contentDispositionFilename(a.Filename))
 		b.WriteString(wrapBase64(a.Data))
 		b.WriteString("\r\n")
 	}
 
-	b.WriteString(fmt.Sprintf("--%s--\r\n", mixedBoundary))
+	fmt.Fprintf(&b, "--%s--\r\n", mixedBoundary)
 	return b.Bytes(), nil
 }
 

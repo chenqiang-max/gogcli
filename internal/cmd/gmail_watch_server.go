@@ -347,7 +347,7 @@ func (s *gmailWatchServer) sendHook(ctx context.Context, payload *gmailHookPaylo
 	if s.cfg.HookToken != "" {
 		req.Header.Set("Authorization", "Bearer "+s.cfg.HookToken)
 	}
-	resp, err := s.hookClient.Do(req)
+	resp, err := s.hookClient.Do(req) //nolint:gosec // hook URL is explicit user configuration
 	if err != nil {
 		_ = s.store.Update(func(state *gmailWatchState) error {
 			state.LastDeliveryStatus = "error"

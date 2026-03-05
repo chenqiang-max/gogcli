@@ -267,6 +267,7 @@ func TestNewBaseTransport_RespectsProxyAndTLSMinimum(t *testing.T) {
 	transport := newBaseTransport()
 	if transport == nil {
 		t.Fatalf("expected transport")
+		return
 	}
 
 	if transport.Proxy == nil {

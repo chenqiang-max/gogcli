@@ -217,7 +217,7 @@ func guessColumns(w io.Writer) int {
 		return 80
 	}
 
-	width, _, err := term.GetSize(int(f.Fd()))
+	width, _, err := term.GetSize(int(f.Fd())) //nolint:gosec // os file descriptor fits int on supported targets
 	if err == nil && width > 0 {
 		return width
 	}

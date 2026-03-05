@@ -819,9 +819,9 @@ func formatQuotedMessage(from, date, body string) string {
 	// Attribution line
 	switch {
 	case date != "" && from != "":
-		sb.WriteString(fmt.Sprintf("On %s, %s wrote:\n", date, from))
+		fmt.Fprintf(&sb, "On %s, %s wrote:\n", date, from)
 	case from != "":
-		sb.WriteString(fmt.Sprintf("%s wrote:\n", from))
+		fmt.Fprintf(&sb, "%s wrote:\n", from)
 	default:
 		sb.WriteString("Original message:\n")
 	}

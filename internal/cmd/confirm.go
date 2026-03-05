@@ -22,7 +22,7 @@ func confirmDestructive(ctx context.Context, flags *RootFlags, action string) er
 	}
 
 	// Never prompt in non-interactive contexts.
-	if flags.NoInput || !term.IsTerminal(int(os.Stdin.Fd())) {
+	if flags.NoInput || !term.IsTerminal(int(os.Stdin.Fd())) { //nolint:gosec // os file descriptor fits int on supported targets
 		return usagef("refusing to %s without --force (non-interactive)", action)
 	}
 

@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log/slog"
 	"os"
-	"strconv"
 	"strings"
 
 	"github.com/alecthomas/kong"
@@ -24,7 +23,8 @@ import (
 const (
 	colorAuto  = "auto"
 	colorNever = "never"
-	strTrue    = "true"
+	boolTrue   = "true"
+	boolFalse  = "false"
 )
 
 type RootFlags struct {
@@ -132,7 +132,7 @@ func Execute(args []string) (err error) {
 
 	// Opt-in "agent mode": default to JSON when stdout is piped/non-TTY.
 	// We intentionally do this after parsing so `--plain` can override it.
-	if envBool("GOG_AUTO_JSON") && !cli.JSON && !cli.Plain && !term.IsTerminal(int(os.Stdout.Fd())) {
+	if envBool("GOG_AUTO_JSON") && !cli.JSON && !cli.Plain && !term.IsTerminal(int(os.Stdout.Fd())) { //nolint:gosec // os file descriptor fits int on supported targets
 		cli.JSON = true
 	}
 
@@ -282,7 +282,7 @@ func envOr(key, fallback string) string {
 func envBool(key string) bool {
 	v := strings.TrimSpace(strings.ToLower(os.Getenv(key)))
 	switch v {
-	case "1", strTrue, "yes", "y", "on":
+	case "1", boolTrue, "yes", "y", "on":
 		return true
 	default:
 		return false
@@ -290,7 +290,10 @@ func envBool(key string) bool {
 }
 
 func boolString(v bool) string {
-	return strconv.FormatBool(v)
+	if v {
+		return boolTrue
+	}
+	return boolFalse
 }
 
 func newParser(description string) (*kong.Kong, *CLI, error) {

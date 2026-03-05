@@ -6,7 +6,7 @@ on:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-16vcpu-ubuntu-2404
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v5
@@ -23,7 +23,7 @@ jobs:
         run: make lint
 
   worker:
-    runs-on: ubuntu-latest
+    runs-on: blacksmith-16vcpu-ubuntu-2404
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -54,3 +54,16 @@ jobs:
         run: go test ./...
       - name: Build (Keychain / cgo)
         run: CGO_ENABLED=1 go build ./cmd/gog
+
+  windows-build:
+    runs-on: blacksmith-16vcpu-windows-2025
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+      - name: Test
+        run: go test ./...
+      - name: Build
+        run: go build ./cmd/gog

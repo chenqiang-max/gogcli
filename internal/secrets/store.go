@@ -137,7 +137,7 @@ func fileKeyringPasswordFuncFrom(password string, passwordSet bool, isTTY bool) 
 
 func fileKeyringPasswordFunc() keyring.PromptFunc {
 	password, passwordSet := os.LookupEnv(keyringPasswordEnv)
-	return fileKeyringPasswordFuncFrom(password, passwordSet, term.IsTerminal(int(os.Stdin.Fd())))
+	return fileKeyringPasswordFuncFrom(password, passwordSet, term.IsTerminal(int(os.Stdin.Fd()))) //nolint:gosec // os file descriptor fits int on supported targets
 }
 
 func normalizeKeyringBackend(value string) string {

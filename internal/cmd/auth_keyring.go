@@ -106,7 +106,7 @@ func (c *AuthKeyringCmd) Run(ctx context.Context, flags *RootFlags) error {
 		!outfmt.IsPlain(ctx) {
 		if v := strings.TrimSpace(os.Getenv(keyringPasswordEnv)); v != "" {
 			u.Err().Println("GOG_KEYRING_PASSWORD found in environment.")
-		} else if !term.IsTerminal(int(os.Stdin.Fd())) {
+		} else if !term.IsTerminal(int(os.Stdin.Fd())) { //nolint:gosec // os file descriptor fits int on supported targets
 			u.Err().Printf("NOTE: file keyring backend in non-interactive context requires %s", keyringPasswordEnv)
 		} else {
 			u.Err().Printf("Hint: set %s for non-interactive use (CI/ssh)", keyringPasswordEnv)

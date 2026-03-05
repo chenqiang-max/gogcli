@@ -52,10 +52,10 @@ const (
 	extPptx                = ".pptx"
 	extPNG                 = ".png"
 	extTXT                 = ".txt"
-
-	driveShareToAnyone = "anyone"
-	driveShareToUser   = "user"
-	driveShareToDomain = "domain"
+	formatAuto             = "auto"
+	driveShareToAnyone     = "anyone"
+	driveShareToUser       = "user"
+	driveShareToDomain     = "domain"
 
 	drivePermRoleReader = "reader"
 	drivePermRoleWriter = "writer"
@@ -85,10 +85,15 @@ type DriveLsCmd struct {
 	Page      string `name:"page" aliases:"cursor" help:"Page token"`
 	Query     string `name:"query" help:"Drive query filter"`
 	Parent    string `name:"parent" help:"Folder ID to list (default: root)"`
+	All       bool   `name:"all" aliases:"global" help:"List all accessible files (mutually exclusive with --parent)"`
 	AllDrives bool   `name:"all-drives" help:"Include shared drives (default: true; use --no-all-drives for My Drive only)" default:"true" negatable:"_"`
 }
 
 func (c *DriveLsCmd) Run(ctx context.Context, flags *RootFlags) error {
+	if c.All && strings.TrimSpace(c.Parent) != "" {
+		return usage("--all cannot be combined with --parent")
+	}
+
 	u := ui.FromContext(ctx)
 	account, err := getAccountForDrive(flags)
 	if err != nil {
@@ -105,15 +110,20 @@ func (c *DriveLsCmd) Run(ctx context.Context, flags *RootFlags) error {
 		return err
 	}
 
-	q := buildDriveListQuery(folderID, c.Query)
+	var q string
+	if c.All {
+		q = buildDriveAllListQuery(c.Query)
+	} else {
+		q = buildDriveListQuery(folderID, c.Query)
+	}
 
+	// Include files from shared drives, not just personal "My Drive"
 	call := svc.Files.List().
 		Q(q).
 		PageSize(c.Max).
 		PageToken(c.Page).
 		OrderBy("modifiedTime desc")
 	call = driveFilesListCallWithDriveSupport(call, c.AllDrives)
-
 	resp, err := call.
 		Fields("nextPageToken, files(id, name, mimeType, size, modifiedTime, parents, webViewLink)").
 		Context(ctx).
@@ -182,7 +192,6 @@ func (c *DriveSearchCmd) Run(ctx context.Context, flags *RootFlags) error {
 		PageToken(c.Page).
 		OrderBy("modifiedTime desc")
 	call = driveFilesListCallWithDriveSupport(call, c.AllDrives)
-
 	resp, err := call.
 		Fields("nextPageToken, files(id, name, mimeType, size, modifiedTime, parents, webViewLink)").
 		Context(ctx).
@@ -981,6 +990,17 @@ func buildDriveListQuery(folderID string, userQuery string) string {
 	return q
 }
 
+func buildDriveAllListQuery(userQuery string) string {
+	q := strings.TrimSpace(userQuery)
+	if q == "" {
+		return "trashed = false"
+	}
+	if !hasDriveTrashedPredicate(q) {
+		q += " and trashed = false"
+	}
+	return q
+}
+
 func buildDriveSearchQuery(text string, rawQuery bool) string {
 	q := strings.TrimSpace(text)
 	if q == "" {
@@ -1112,10 +1132,15 @@ func guessMimeType(path string) string {
 
 func downloadDriveFile(ctx context.Context, svc *drive.Service, meta *drive.File, destPath string, format string) (string, int64, error) {
 	isGoogleDoc := strings.HasPrefix(meta.MimeType, "application/vnd.google-apps.")
-	origFormat := format
-	format = strings.ToLower(strings.TrimSpace(format))
+	normalizedFormat := strings.ToLower(strings.TrimSpace(format))
+	if normalizedFormat == formatAuto {
+		normalizedFormat = ""
+	}
 
-	if fileFormatErr := validateDriveDownloadFormatForFile(meta, origFormat); fileFormatErr != nil {
+	if !isGoogleDoc && normalizedFormat != "" {
+		return "", 0, fmt.Errorf("--format %q not supported for non-Google Workspace files (mimeType=%q); file can only be downloaded as-is", format, meta.MimeType)
+	}
+	if fileFormatErr := validateDriveDownloadFormatForFile(meta, format); fileFormatErr != nil {
 		return "", 0, fileFormatErr
 	}
 
@@ -1127,11 +1152,11 @@ func downloadDriveFile(ctx context.Context, svc *drive.Service, meta *drive.File
 
 	if isGoogleDoc {
 		var exportMimeType string
-		if format == "" {
+		if normalizedFormat == "" {
 			exportMimeType = driveExportMimeType(meta.MimeType)
 		} else {
 			var mimeErr error
-			exportMimeType, mimeErr = driveExportMimeTypeForFormat(meta.MimeType, format)
+			exportMimeType, mimeErr = driveExportMimeTypeForFormat(meta.MimeType, normalizedFormat)
 			if mimeErr != nil {
 				return "", 0, mimeErr
 			}
@@ -1231,7 +1256,7 @@ func driveExportMimeType(googleMimeType string) string {
 
 func driveExportMimeTypeForFormat(googleMimeType string, format string) (string, error) {
 	format = strings.ToLower(strings.TrimSpace(format))
-	if format == "" {
+	if format == "" || format == formatAuto {
 		return driveExportMimeType(googleMimeType), nil
 	}
 

@@ -14,6 +14,11 @@ func TestDriveCommand_ValidationErrors(t *testing.T) {
 		t.Fatalf("expected parent error, got %v", err)
 	}
 
+	lsCmd := &DriveLsCmd{}
+	if err := runKong(t, lsCmd, []string{"--all", "--parent", "p1"}, context.Background(), flags); err == nil || !strings.Contains(err.Error(), "--all cannot be combined with --parent") {
+		t.Fatalf("expected mutually exclusive error, got %v", err)
+	}
+
 	shareCmd := &DriveShareCmd{}
 	if err := runKong(t, shareCmd, []string{"file1"}, context.Background(), flags); err == nil || !strings.Contains(err.Error(), "must specify --to") {
 		t.Fatalf("expected share target error, got %v", err)

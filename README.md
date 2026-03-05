@@ -18,7 +18,7 @@ Fast, script-friendly CLI for Gmail, Calendar, Chat, Classroom, Drive, Docs, Sli
 - **Sheets** - read/write/update spreadsheets, insert rows/cols, format cells, read notes, create new sheets (and export via Drive)
 - **Forms** - create/get forms and inspect responses
 - **Apps Script** - create/get projects, inspect content, and run functions
-- **Docs/Slides** - export to PDF/DOCX/PPTX via Drive (plus create/copy, docs-to-text)
+- **Docs/Slides** - export to PDF/DOCX/PPTX via Drive (plus create/copy, docs-to-text, and **sedmat** sed-style document editing with Markdown formatting, images, and tables)
 - **People** - access profile information
 - **Keep (Workspace only)** - list/get/search notes and download attachments (service account + domain-wide delegation)
 - **Groups** - list groups you belong to, view group members (Google Workspace)
@@ -27,7 +27,7 @@ Fast, script-friendly CLI for Gmail, Calendar, Chat, Classroom, Drive, Docs, Sli
 - **Command allowlist** - restrict top-level commands for sandboxed/agent runs
 - **Secure credential storage** using OS keyring or encrypted on-disk keyring (configurable)
 - **Auto-refreshing tokens** - authenticate once, use indefinitely
-- **Least-privilege auth** - `--readonly` and `--drive-scope` to request fewer scopes
+- **Least-privilege auth** - `--readonly`, `--drive-scope`, and `--gmail-scope` to request fewer scopes
 - **Workspace service accounts** - domain-wide delegation auth (preferred when configured)
 - **Parseable output** - JSON mode for scripting and automation (Calendar adds day-of-week fields)
 
@@ -319,10 +319,21 @@ gog auth add you@gmail.com --services drive --drive-scope readonly
 gog auth add you@gmail.com --services drive --drive-scope file
 ```
 
+To control Gmail’s scope (default: `full`):
+
+```bash
+gog auth add you@gmail.com --services gmail --gmail-scope full
+gog auth add you@gmail.com --services gmail --gmail-scope readonly
+# Example: readonly on both Gmail and Drive
+gog auth add you@gmail.com --services gmail,drive --gmail-scope readonly --drive-scope readonly
+```
+
 Notes:
 
 - `--drive-scope readonly` is enough for listing/downloading/exporting via Drive (write operations will 403).
 - `--drive-scope file` is write-capable (limited to files created/opened by this app) and can’t be combined with `--readonly`.
+- `--gmail-scope readonly` requests `gmail.readonly` (no modify/settings write scopes).
+- For `--readonly`, `--drive-scope readonly|file`, or `--gmail-scope readonly`, auth disables Google `include_granted_scopes` to prevent old broader grants from silently accumulating.
 
 If you need to add services later and Google doesn't return a refresh token, re-run with `--force-consent`:
 
@@ -538,6 +549,7 @@ gog auth credentials <path>           # Store OAuth client credentials
 gog auth credentials list             # List stored OAuth client credentials
 gog --client work auth credentials <path>  # Store named OAuth client credentials
 gog auth add <email>                  # Authorize and store refresh token
+gog auth add <email> --services gmail --gmail-scope readonly  # Gmail read-only token
 gog auth service-account set <email> --key <path>  # Configure service account impersonation (Workspace only)
 gog auth service-account status <email>            # Show service account status
 gog auth service-account unset <email>             # Remove service account
@@ -583,6 +595,11 @@ gog gmail send --to a@b.com --subject "Hi" --body-file -   # Read body from stdi
 gog gmail send --to a@b.com --subject "Hi" --body "Plain fallback" --body-html "<p>Hello</p>"
 # Reply + include quoted original message (auto-generates HTML quote unless you pass --body-html)
 gog gmail send --reply-to-message-id <messageId> --quote --to a@b.com --subject "Re: Hi" --body "My reply"
+# Draft reply + quote (create requires explicit reply target)
+gog gmail drafts create --reply-to-message-id <messageId> --quote --subject "Re: Hi" --body "My reply"
+# Draft reply + quote (update accepts explicit target; else falls back to latest non-draft, non-self message in thread)
+gog gmail drafts update <draftId> --reply-to-message-id <messageId> --quote --subject "Re: Hi" --body "My reply"
+gog gmail drafts update <draftId> --quote --subject "Re: Hi" --body "My reply"
 gog gmail drafts list
 gog gmail drafts create --subject "Draft" --body "Body"
 gog gmail drafts create --to a@b.com --subject "Draft" --body "Body"
@@ -816,6 +833,7 @@ gog time now --timezone UTC
 # List and search
 gog drive ls --max 20
 gog drive ls --parent <folderId> --max 20
+gog drive ls --all --max 20               # List across all accessible files (cannot combine with --parent)
 gog drive ls --no-all-drives            # Only list from "My Drive"
 gog drive search "invoice" --max 20
 gog drive search "invoice" --no-all-drives
@@ -888,6 +906,7 @@ gog sheets export <spreadsheetId> --format pdf --out ./sheet.pdf
 gog sheets format <spreadsheetId> 'Sheet1!A1:B2' --format-json '{"textFormat":{"bold":true}}' --format-fields 'userEnteredFormat.textFormat.bold'
 gog sheets insert <spreadsheetId> "Sheet1" rows 2 --count 3
 gog sheets notes <spreadsheetId> 'Sheet1!A1:B10'
+gog sheets links <spreadsheetId> 'Sheet1!A1:B10'
 ```
 
 ### Contacts
@@ -979,6 +998,7 @@ gog sheets insert <spreadsheetId> "Sheet1" cols 3 --after
 
 # Notes
 gog sheets notes <spreadsheetId> 'Sheet1!A1:B10'
+gog sheets links <spreadsheetId> 'Sheet1!A1:B10'   # Includes rich-text links
 
 # Create
 gog sheets create "My New Spreadsheet" --sheets "Sheet1,Sheet2"
@@ -1142,7 +1162,31 @@ Note: Classroom commands require a Google Workspace for Education account. Perso
 gog docs export <docId> --format pdf --out ./doc.pdf
 gog docs export <docId> --format docx --out ./doc.docx
 gog docs export <docId> --format txt --out ./doc.txt
+
+# Sed-style regex editing with Markdown formatting (sedmat)
+gog docs sed <docId> 's/pattern/replacement/g'
+
+# Formatting in replacements
+gog docs sed <docId> 's/hello/**hello**/'          # bold
+gog docs sed <docId> 's/hello/*hello*/'             # italic
+gog docs sed <docId> 's/hello/~~hello~~/'           # strikethrough
+gog docs sed <docId> 's/hello/`hello`/'             # monospace
+gog docs sed <docId> 's/hello/__hello__/'           # underline
+gog docs sed <docId> 's/Google/[Google](https://google.com)/'  # link
+
+# Images
+gog docs sed <docId> 's/{{LOGO}}/![](https://example.com/logo.png)/'
+gog docs sed <docId> 's/{{HERO}}/![](https://example.com/hero.jpg){width=600}/'
+
+# Tables — create, populate, modify
+gog docs sed <docId> 's/{{TABLE}}/|3x4|/'            # create 3-row, 4-col table
+gog docs sed <docId> 's/|1|[A1]/**Name**/'           # set cell A1 (bold)
+gog docs sed <docId> 's/|1|[1,*]/**&**/'             # bold entire row 1
+gog docs sed <docId> 's/|1|[row:+2]//'               # insert row before row 2
+gog docs sed <docId> 's/|1|[col:$+]//'               # append column at end
 ```
+
+> See [docs/sedmat.md](docs/sedmat.md) for the full sedmat syntax reference.
 
 ### Slides
 

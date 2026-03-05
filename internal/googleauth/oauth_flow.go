@@ -20,15 +20,16 @@ import (
 )
 
 type AuthorizeOptions struct {
-	Services     []Service
-	Scopes       []string
-	Manual       bool
-	ForceConsent bool
-	Timeout      time.Duration
-	Client       string
-	AuthCode     string
-	AuthURL      string
-	RequireState bool
+	Services                    []Service
+	Scopes                      []string
+	Manual                      bool
+	ForceConsent                bool
+	DisableIncludeGrantedScopes bool
+	Timeout                     time.Duration
+	Client                      string
+	AuthCode                    string
+	AuthURL                     string
+	RequireState                bool
 }
 
 type ManualAuthURLResult struct {
@@ -204,7 +205,7 @@ func authorizeServer(ctx context.Context, opts AuthorizeOptions, creds config.Cl
 		}
 	}()
 
-	authURL := cfg.AuthCodeURL(state, authURLParams(opts.ForceConsent)...)
+	authURL := cfg.AuthCodeURL(state, authURLParams(opts.ForceConsent, !opts.DisableIncludeGrantedScopes)...)
 
 	fmt.Fprintln(os.Stderr, "Opening browser for authorization…")
 	fmt.Fprintln(os.Stderr, "If the browser doesn't open, visit this URL:")
@@ -245,11 +246,12 @@ func authorizeServer(ctx context.Context, opts AuthorizeOptions, creds config.Cl
 	}
 }
 
-func authURLParams(forceConsent bool) []oauth2.AuthCodeOption {
-	opts := []oauth2.AuthCodeOption{
-		oauth2.AccessTypeOffline,
-		oauth2.SetAuthURLParam("include_granted_scopes", "true"),
+func authURLParams(forceConsent bool, includeGrantedScopes bool) []oauth2.AuthCodeOption {
+	opts := []oauth2.AuthCodeOption{oauth2.AccessTypeOffline}
+	if includeGrantedScopes {
+		opts = append(opts, oauth2.SetAuthURLParam("include_granted_scopes", "true"))
 	}
+
 	if forceConsent {
 		opts = append(opts, oauth2.SetAuthURLParam("prompt", "consent"))
 	}
@@ -283,7 +285,7 @@ func renderSuccessPage(w http.ResponseWriter) {
 func renderErrorPage(w http.ResponseWriter, errorMsg string) {
 	tmpl, err := template.New("error").Parse(errorTemplate)
 	if err != nil {
-		_, _ = w.Write([]byte("Error: " + errorMsg))
+		_, _ = w.Write([]byte("Error: " + template.HTMLEscapeString(errorMsg))) //nolint:gosec // string is escaped before fallback render
 		return
 	}
 	_ = tmpl.Execute(w, struct{ Error string }{Error: errorMsg})

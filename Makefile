@@ -61,8 +61,8 @@ help: gog-help
 tools:
 	@mkdir -p $(TOOLS_DIR)
 	@GOBIN=$(TOOLS_DIR) go install mvdan.cc/gofumpt@v0.9.2
-	@GOBIN=$(TOOLS_DIR) go install golang.org/x/tools/cmd/goimports@v0.41.0
-	@GOBIN=$(TOOLS_DIR) go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.8.0
+	@GOBIN=$(TOOLS_DIR) go install golang.org/x/tools/cmd/goimports@v0.42.0
+	@GOBIN=$(TOOLS_DIR) go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.10.1
 
 fmt: tools
 	@$(GOIMPORTS) -local github.com/steipete/gogcli -w .
