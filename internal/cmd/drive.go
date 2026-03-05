@@ -69,7 +69,7 @@ type DriveCmd struct {
 	Copy        DriveCopyCmd        `cmd:"" name:"copy" help:"Copy a file"`
 	Upload      DriveUploadCmd      `cmd:"" name:"upload" help:"Upload a file"`
 	Mkdir       DriveMkdirCmd       `cmd:"" name:"mkdir" help:"Create a folder"`
-	Delete      DriveDeleteCmd      `cmd:"" name:"delete" help:"Move a file to trash (use --permanent to delete forever)" aliases:"rm,del"`
+	Delete      DriveDeleteCmd      `cmd:"" name:"delete" help:"Move a file to trash" aliases:"rm,del"`
 	Move        DriveMoveCmd        `cmd:"" name:"move" help:"Move a file to a different folder"`
 	Rename      DriveRenameCmd      `cmd:"" name:"rename" help:"Rename a file or folder"`
 	Share       DriveShareCmd       `cmd:"" name:"share" help:"Share a file or folder"`
@@ -555,7 +555,7 @@ func (c *DriveMkdirCmd) Run(ctx context.Context, flags *RootFlags) error {
 
 type DriveDeleteCmd struct {
 	FileID    string `arg:"" name:"fileId" help:"File ID"`
-	Permanent bool   `name:"permanent" help:"Permanently delete instead of moving to trash" default:"false"`
+	Permanent bool   `name:"permanent" hidden:"" help:"Permanently delete instead of moving to trash" default:"false"`
 }
 
 func (c *DriveDeleteCmd) Run(ctx context.Context, flags *RootFlags) error {
@@ -570,9 +570,6 @@ func (c *DriveDeleteCmd) Run(ctx context.Context, flags *RootFlags) error {
 	}
 
 	action := "trash drive file"
-	if c.Permanent {
-		action = "permanently delete drive file"
-	}
 	if confirmErr := confirmDestructive(ctx, flags, fmt.Sprintf("%s %s", action, fileID)); confirmErr != nil {
 		return confirmErr
 	}
@@ -582,22 +579,16 @@ func (c *DriveDeleteCmd) Run(ctx context.Context, flags *RootFlags) error {
 		return err
 	}
 
-	trashed := !c.Permanent
-	deleted := c.Permanent
+	trashed := true
+	deleted := false
 
-	if c.Permanent {
-		if err := svc.Files.Delete(fileID).SupportsAllDrives(true).Context(ctx).Do(); err != nil {
-			return err
-		}
-	} else {
-		_, err := svc.Files.Update(fileID, &drive.File{Trashed: true}).
-			SupportsAllDrives(true).
-			Fields("id, trashed").
-			Context(ctx).
-			Do()
-		if err != nil {
-			return err
-		}
+	_, err = svc.Files.Update(fileID, &drive.File{Trashed: true}).
+		SupportsAllDrives(true).
+		Fields("id, trashed").
+		Context(ctx).
+		Do()
+	if err != nil {
+		return err
 	}
 	return writeResult(ctx, u,
 		kv("trashed", trashed),
